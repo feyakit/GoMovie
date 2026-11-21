@@ -927,7 +927,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           color: Colors.white,
           activeColor: Theme.of(context).colorScheme.primaryFixedDim,
         ),
-        if (session.supportsDanmaku)
+        if (session.danmakuSupported)
           IconButton(
             onPressed: () {
               unawaited(HapticFeedback.selectionClick());
