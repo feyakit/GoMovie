@@ -4,11 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -81,20 +84,33 @@ class WebViewBridge(
         }
 
         val dp = activity.resources.displayMetrics.density
+        val resId = activity.resources.getIdentifier("status_bar_height", "dimen", "android")
+        val fallbackTopInset = if (resId > 0) activity.resources.getDimensionPixelSize(resId) else (28 * dp).toInt()
+        val hPad = (14 * dp).toInt()
+        val vPad = (10 * dp).toInt()
         val toolbar = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundColor(Color.parseColor("#141418"))
-            val hPad = (14 * dp).toInt()
-            val vPad = (10 * dp).toInt()
-            setPadding(hPad, vPad, hPad, vPad)
+            setPadding(hPad, fallbackTopInset + vPad, hPad, vPad)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            root.setOnApplyWindowInsetsListener { _, insets ->
+                val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                val top = maxOf(bars.top, fallbackTopInset)
+                toolbar.setPadding(hPad + bars.left, top + vPad, hPad + bars.right, vPad)
+                insets
+            }
         }
 
         val cancelBtn = TextView(activity).apply {
             text = "取消"
             setTextColor(Color.parseColor("#B0B0BC"))
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setPadding((8 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
+            gravity = Gravity.CENTER
+            minHeight = (44 * dp).toInt()
+            minWidth = (56 * dp).toInt()
+            setPadding((12 * dp).toInt(), (8 * dp).toInt(), (12 * dp).toInt(), (8 * dp).toInt())
         }
         val titleView = TextView(activity).apply {
             text = "完成验证后点击「完成」"
@@ -105,9 +121,16 @@ class WebViewBridge(
         }
         val doneBtn = TextView(activity).apply {
             text = "完成"
-            setTextColor(Color.parseColor("#FF2E54"))
+            setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-            setPadding((12 * dp).toInt(), (6 * dp).toInt(), (8 * dp).toInt(), (6 * dp).toInt())
+            gravity = Gravity.CENTER
+            minHeight = (40 * dp).toInt()
+            minWidth = (68 * dp).toInt()
+            setPadding((16 * dp).toInt(), (8 * dp).toInt(), (16 * dp).toInt(), (8 * dp).toInt())
+            background = GradientDrawable().apply {
+                setColor(Color.parseColor("#FF2E54"))
+                cornerRadius = 999f
+            }
         }
 
         toolbar.addView(cancelBtn)
