@@ -484,6 +484,16 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
                 null => null,
               },
             ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 64,
+              child: FadePresence(
+                child: _session.routeNotice != null
+                    ? PlayerRouteNoticeBadge(text: _session.routeNotice!)
+                    : null,
+              ),
+            ),
             PlayerLockOverlay(
               locked: locked,
               alignments: [Alignment.centerLeft, Alignment.centerRight],

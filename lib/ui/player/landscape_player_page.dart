@@ -569,37 +569,16 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
                 : null,
           ),
         ),
-        if (session.ready && session.routeNotice != null)
-          Positioned(
-            top: full ? 64 : 48,
-            left: 16,
-            right: 16,
-            child: IgnorePointer(
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: .68),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: .14),
-                    ),
-                  ),
-                  child: Text(
-                    session.routeNotice!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+        Positioned(
+          top: full ? 64 : 48,
+          left: 0,
+          right: 0,
+          child: FadePresence(
+            child: session.routeNotice != null
+                ? PlayerRouteNoticeBadge(text: session.routeNotice!)
+                : null,
           ),
+        ),
         if (session.saveWarning case final warning?)
           Positioned(
             left: 12,
