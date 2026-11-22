@@ -663,6 +663,16 @@ func (engine *nativeEngine) nativeCatalog(ctx context.Context, input nativeInput
 	return result, nil
 }
 
+// nativeNeedsVerification 判断错误是否属于「需要人机验证」，这类错误不触发换源兜底。
+func nativeNeedsVerification(err error) bool {
+	if err == nil {
+		return false
+	}
+	text := err.Error()
+	return strings.Contains(text, "验证") || strings.Contains(text, "人机") ||
+		strings.Contains(text, "challenge") || strings.Contains(text, "Challenge")
+}
+
 func (engine *nativeEngine) nativeDetail(ctx context.Context, drama LibraryDrama) (any, error) {
 	source, sourceID, valid := SplitProviderDramaID(drama.ID)
 	if !valid {
@@ -673,7 +683,8 @@ func (engine *nativeEngine) nativeDetail(ctx context.Context, drama LibraryDrama
 		return nil, errors.New("请选择有效站源")
 	}
 	raw, chapters, err := p.Detail(ctx, sourceID)
-	if _, isTVBox := p.(*tvboxProvider); isTVBox && (err != nil || len(chapters) == 0) {
+	// 需要人机验证的错误不能被「换源兜底」绕过：必须让用户走 WebView 验证。
+	if _, isTVBox := p.(*tvboxProvider); isTVBox && (err != nil || len(chapters) == 0) && !nativeNeedsVerification(err) {
 		// 订阅里的 jar 站源多半是聚合站：列表条目只是"去别处搜这个词"的占位符，
 		// detailContent 返回空。用片名到其它站源搜一遍，命中就换成真实站源。
 		if altSource, altID, altRaw, altChapters, ok := engine.nativeSearchElsewhere(ctx, drama.Title, source); ok {
