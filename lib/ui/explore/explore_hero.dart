@@ -69,16 +69,16 @@ class ExploreHero extends StatelessWidget {
       switch (AppScope.formFactorOf(context)) {
         FormFactor.phone => (
           design: 358,
-          height: 196,
-          radius: 20,
-          padding: const EdgeInsets.all(16),
-          cover: const Size(109, 164),
-          coverRadius: 12,
-          gap: 16,
+          height: 232,
+          radius: 22,
+          padding: const EdgeInsets.all(18),
+          cover: const Size(124, 186),
+          coverRadius: 14,
+          gap: 18,
           width: null,
-          title: 20,
+          title: 21,
           meta: 13,
-          button: 40,
+          button: 42,
           detail: false,
         ),
         FormFactor.window => (
@@ -274,22 +274,17 @@ class ExploreHero extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            ColoredBox(color: _shade.withValues(alpha: 0.9)),
+            ColoredBox(color: _shade.withValues(alpha: 0.92)),
             CoverBackdrop(
               drama: drama,
-              sigma: 40,
+              sigma: 28,
               overlay: LinearGradient(
-                stops: metrics.detail ? const [0, 0.55, 1] : const [0, 1],
-                colors: metrics.detail
-                    ? [
-                        _shade.withValues(alpha: 0.9),
-                        _shade.withValues(alpha: 0.7),
-                        _shade.withValues(alpha: 0.2),
-                      ]
-                    : [
-                        _shade.withValues(alpha: 0.88),
-                        _shade.withValues(alpha: 0.55),
-                      ],
+                stops: const [0, 0.55, 1],
+                colors: [
+                  _shade.withValues(alpha: 0.94),
+                  _shade.withValues(alpha: 0.64),
+                  _shade.withValues(alpha: 0.22),
+                ],
               ),
             ),
             if (!television)

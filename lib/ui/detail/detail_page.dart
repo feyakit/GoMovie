@@ -535,13 +535,17 @@ class _DetailPageState extends State<DetailPage> {
           height: height,
           child: CoverBackdrop(
             drama: drama,
-            sigma: 36,
-            opacity: theme.brightness == Brightness.dark ? 0.55 : 0.45,
+            sigma: 30,
+            opacity: theme.brightness == Brightness.dark ? 0.68 : 0.48,
             overlay: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              stops: const [0, 0.92],
-              colors: [surface.withValues(alpha: 0), surface],
+              stops: const [0, 0.45, 0.94],
+              colors: [
+                surface.withValues(alpha: 0.08),
+                surface.withValues(alpha: 0.55),
+                surface,
+              ],
             ),
           ),
         ),
@@ -573,7 +577,7 @@ class _DetailPageState extends State<DetailPage> {
             SliverToBoxAdapter(
               child: _withBackdrop(
                 drama,
-                top + 250,
+                top + 300,
                 Padding(
                   padding: EdgeInsets.fromLTRB(20, top + 4, 20, 0),
                   child: Column(

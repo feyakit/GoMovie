@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -85,7 +84,7 @@ abstract final class AccentPicker {
     try {
       final file = File(path);
       if (!await file.exists()) return null;
-      return fromBytes(await file.readAsBytes(), source: path);
+      return await fromBytes(await file.readAsBytes(), source: path);
     } catch (_) {
       return null;
     }

@@ -271,11 +271,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
       return;
     }
     final x = details.localPosition.dx;
-    final side =
-        !full && widget.onFullscreen == null ||
-            !_session.store.playbackPreferences.doubleTapSeek
-        ? 0
-        : x < width / 4
+    final side = x < width / 4
         ? -1
         : x > width * 3 / 4
         ? 1
@@ -497,9 +493,9 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         ),
         SwipeControls(
           session: session,
-          enabled: full && !locked,
-          levels: session.store.playbackPreferences.swipeLevels,
-          episodes: session.store.playbackPreferences.swipeEpisodes,
+          enabled: !locked,
+          levels: true,
+          episodes: false,
           child: LayoutBuilder(
             builder: (context, constraints) => GestureDetector(
               behavior: HitTestBehavior.opaque,

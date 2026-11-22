@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
 
 import '../../core_bridge.dart';
 import '../../local_store.dart';
 import '../app_scope.dart';
 import '../detail/detail_page.dart';
+import '../player/playback_handle.dart';
+import '../player/playback_page.dart';
 import '../shell/app_shell.dart';
 import '../widgets/group_card.dart';
 
@@ -223,23 +223,33 @@ class _NetdiskPageState extends State<NetdiskPage> {
   }
 
   Future<void> _play(int index) async {
+    final store = widget.store;
+    if (store == null || _shareUrl.isEmpty) return;
     setState(() => _loading = true);
     try {
-      final data = await AppScope.of(context).repository.netdiskPlay(
-        _shareUrl,
-        index,
-      );
-      final url = data['url'] as String? ?? '';
-      final headers = <String, String>{
-        for (final row in (data['headers'] as Map? ?? const {}).entries)
-          '${row.key}': '${row.value}',
-      };
-      if (url.isEmpty) throw StateError('没有拿到播放地址');
+      final scope = AppScope.of(context);
+      final repo = scope.repository;
+      final drama = await repo.netdiskOpenShare(_shareUrl);
+      final detail = await repo.detail(drama);
       if (!mounted) return;
       setState(() => _loading = false);
-      await Navigator.of(context).push(
-        MaterialPageRoute<void>(
-          builder: (_) => _NetdiskPlayerPage(url: url, headers: headers),
+      final safeIndex = index.clamp(
+        0,
+        detail.episodes.isEmpty ? 0 : detail.episodes.length - 1,
+      );
+      await openPage<void>(
+        context,
+        (_) => PlaybackPage(
+          store: store,
+          handle: PlaybackHandle(
+            repository: repo,
+            store: store,
+            detail: detail,
+            index: safeIndex,
+            preopen: store.playbackPreferences.preopens(
+              television: scope.television,
+            ),
+          ),
         ),
       );
     } catch (error) {
@@ -515,53 +525,6 @@ class _QrDialogState extends State<_QrDialog> {
           child: const Text('取消'),
         ),
       ],
-    );
-  }
-}
-
-/// 极简播放页：直链 + 请求头（网盘 CDN 需要 cookie）。
-class _NetdiskPlayerPage extends StatefulWidget {
-  const _NetdiskPlayerPage({required this.url, required this.headers});
-  final String url;
-  final Map<String, String> headers;
-
-  @override
-  State<_NetdiskPlayerPage> createState() => _NetdiskPlayerPageState();
-}
-
-class _NetdiskPlayerPageState extends State<_NetdiskPlayerPage> {
-  late final Player _player;
-  late final VideoController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _player = Player();
-    _controller = VideoController(_player);
-    _player.open(Media(widget.url, httpHeaders: widget.headers));
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('网盘播放'),
-      ),
-      body: Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Video(controller: _controller),
-        ),
-      ),
     );
   }
 }

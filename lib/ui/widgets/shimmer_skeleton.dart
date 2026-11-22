@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
-import '../shell/app_shell.dart';
 
 class ShimmerBox extends StatefulWidget {
   const ShimmerBox({

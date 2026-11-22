@@ -67,6 +67,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
   double? _seekTarget;
   Timer? _seekTimer;
   Timer? _idleTimer;
+  Timer? _tapTimer;
   bool _idle = false;
   bool _quietSwitch = false;
   late bool _lastPaused = _session.paused;
@@ -100,6 +101,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
     _hintTimer?.cancel();
     _seekTimer?.cancel();
     _idleTimer?.cancel();
+    _tapTimer?.cancel();
     if (_immersive) {
       unawaited(
         SystemChrome.setEnabledSystemUIMode(
@@ -154,6 +156,38 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
     _quietSwitch = false;
     _idleTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) setState(() => _idle = true);
+    });
+  }
+
+  void _toggleChrome() {
+    if (_chromeShown && !_dragging && !_session.paused && _session.error == null) {
+      _idleTimer?.cancel();
+      setState(() => _idle = true);
+    } else {
+      setState(_wake);
+    }
+  }
+
+  void _tapUp(TapUpDetails details, double width) {
+    if (_pinching || _session.locked) return;
+    if (_tapTimer?.isActive ?? false) {
+      _tapTimer!.cancel();
+      final x = details.localPosition.dx;
+      final duration = _session.player.state.duration;
+      if (_session.ready && duration > Duration.zero && (x < width / 4 || x > width * 3 / 4)) {
+        final step = x < width / 4 ? -10 : 10;
+        final target = (_session.player.state.position.inMilliseconds + step * 1000)
+            .clamp(0, duration.inMilliseconds);
+        unawaited(_session.seekTo(Duration(milliseconds: target)));
+        unawaited(HapticFeedback.selectionClick());
+        _say(step < 0 ? '快退 10 秒' : '快进 10 秒');
+      } else {
+        _session.togglePlayback();
+      }
+      return;
+    }
+    _tapTimer = Timer(const Duration(milliseconds: 260), () {
+      if (mounted) _toggleChrome();
     });
   }
 
@@ -605,12 +639,13 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
               key: const ValueKey('gestures'),
               session: session,
               enabled: !_pinching && !_session.locked,
+              levels: true,
               child: LayoutBuilder(
                 builder: (context, constraints) => GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: _pinching || _session.locked
+                  onTapUp: _pinching || _session.locked
                       ? null
-                      : session.togglePlayback,
+                      : (details) => _tapUp(details, constraints.maxWidth),
                   onLongPressStart: _pinching || _session.locked
                       ? null
                       : (details) => _pressStart(details, constraints.maxWidth),

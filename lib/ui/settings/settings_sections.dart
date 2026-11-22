@@ -171,7 +171,7 @@ class SettingsSection extends StatelessWidget {
           ),
           ValueTile<double>(
             title: '长按倍速',
-            subtitle: '按住画面或方向键时临时使用的倍速',
+            subtitle: '按住画面时临时使用的倍速',
             options: {for (final speed in boostSpeeds) speed: '${speed}x'},
             value: preferences.boostSpeed,
             onChanged: (speed) =>
@@ -191,10 +191,6 @@ class SettingsSection extends StatelessWidget {
             onChanged: (quality) =>
                 savePreferences(preferences.copyWith(quality: quality)),
           ),
-        ],
-      ),
-      SettingsCard(
-        children: [
           ValueTile<TelevisionDecoder>(
             title: '解码方式',
             subtitle: '有声音没画面或卡顿时可换兼容方式，下次打开视频时生效',
@@ -205,144 +201,47 @@ class SettingsSection extends StatelessWidget {
             ),
           ),
           if (Platform.isAndroid) const _RenderingTile(),
-          SwitchTile(
-            title: '预开下一集',
-            subtitle: '提前打开下一集的播放器，切集无需等待',
-            value: preferences.preopens(television: television),
-            onChanged: (value) =>
-                savePreferences(preferences.copyWith(preopen: value)),
-          ),
-          if (!television)
-            SwitchTile(
-              title: '横屏视频也使用竖屏样式',
-              subtitle: Platform.isAndroid || Platform.isIOS
-                  ? '竖屏观看横屏视频时画面居中，上下滑动切集，点选集右边的按钮进入全屏'
-                  : '窗口竖长时横屏视频画面居中，滚轮切集，点选集右边的按钮进入全屏',
-              value: preferences.portraitStyleForWide,
-              onChanged: (value) => savePreferences(
-                preferences.copyWith(portraitStyleForWide: value),
-              ),
-            ),
         ],
       ),
-      if ((Platform.isAndroid || Platform.isIOS) && !television)
+      if (MediaControls.supported ||
+          (Platform.isAndroid && !television) ||
+          Platform.isWindows ||
+          Platform.isMacOS)
         SettingsCard(
           children: [
-            SwitchTile(
-              title: '双击快退/快进',
-              subtitle: '左侧双击快退，右侧双击快进，关闭时均为暂停',
-              value: preferences.doubleTapSeek,
-              onChanged: (value) =>
-                  savePreferences(preferences.copyWith(doubleTapSeek: value)),
-            ),
-            SwitchTile(
-              title: '滑动调节亮度/音量',
-              subtitle: '左侧上下滑动调整亮度，右侧上下滑动调整音量',
-              value: preferences.swipeLevels,
-              onChanged: (value) =>
-                  savePreferences(preferences.copyWith(swipeLevels: value)),
-            ),
-            SwitchTile(
-              title: '上下滑动切换剧集',
-              subtitle: preferences.swipeLevels
-                  ? '需先关闭滑动调节亮度/音量'
-                  : '横屏全屏时上滑播放下一集，下滑播放上一集',
-              value: preferences.swipeEpisodes,
-              onChanged: preferences.swipeLevels
-                  ? null
-                  : (value) => savePreferences(
-                      preferences.copyWith(swipeEpisodes: value),
-                    ),
-            ),
-            SwitchTile(
-              title: '竖屏自动隐藏播控',
-              subtitle: '竖屏播放几秒后隐藏标题、进度条和选集，单击暂停时重新显示',
-              value: preferences.autoHideControls,
-              onChanged: (value) => savePreferences(
-                preferences.copyWith(autoHideControls: value),
+            if (MediaControls.supported)
+              SwitchTile(
+                title: '后台播放',
+                subtitle: Platform.isAndroid || Platform.isIOS
+                    ? '离开应用或锁屏后继续播放，可在通知栏和耳机上控制'
+                    : '最小化后继续播放，可用系统媒体控件控制',
+                value: preferences.backgroundPlayback,
+                onChanged: (value) => savePreferences(
+                  preferences.copyWith(backgroundPlayback: value),
+                ),
               ),
-            ),
-            SwitchTile(
-              title: '状态栏跟随播控隐藏',
-              subtitle: preferences.autoHideControls
-                  ? '播控隐藏时一起收起系统状态栏和导航栏'
-                  : '需先打开竖屏自动隐藏播控',
-              value: preferences.hideSystemBars,
-              onChanged: preferences.autoHideControls
-                  ? (value) => savePreferences(
-                      preferences.copyWith(hideSystemBars: value),
-                    )
-                  : null,
-            ),
-            SwitchTile(
-              title: '横屏底部进度线',
-              subtitle: '横屏全屏播控隐藏后，在画面底边保留一条细进度线',
-              value: preferences.progressLine,
-              onChanged: (value) =>
-                  savePreferences(preferences.copyWith(progressLine: value)),
-            ),
-          ],
-        ),
-      SettingsCard(
-        children: [
-          SwitchTile(
-            title: '全屏显示时间',
-            subtitle: '全屏播放时在画面顶部显示当前时间',
-            value: preferences.showClock,
-            onChanged: (value) =>
-                savePreferences(preferences.copyWith(showClock: value)),
-          ),
-          SwitchTile(
-            title: '全屏显示网速',
-            subtitle: '全屏播放时在画面顶部显示当前下载速度',
-            value: preferences.showNetworkSpeed,
-            onChanged: (value) =>
-                savePreferences(preferences.copyWith(showNetworkSpeed: value)),
-          ),
-        ],
-      ),
-      if (MediaControls.supported)
-        SettingsCard(
-          children: [
-            SwitchTile(
-              title: '后台播放',
-              subtitle: Platform.isAndroid || Platform.isIOS
-                  ? '离开应用或锁屏后继续播放，可在通知栏、锁屏和耳机上控制'
-                  : '最小化后继续播放，可用键盘媒体键和系统媒体控件控制',
-              value: preferences.backgroundPlayback,
-              onChanged: (value) => savePreferences(
-                preferences.copyWith(backgroundPlayback: value),
+            if (Platform.isAndroid && !television)
+              SwitchTile(
+                title: '离开应用时自动小窗',
+                subtitle: '播放中回到桌面时自动进入画中画',
+                value: preferences.autoPictureInPicture,
+                onChanged: (value) => savePreferences(
+                  preferences.copyWith(autoPictureInPicture: value),
+                ),
               ),
-            ),
-          ],
-        ),
-      if (Platform.isAndroid && !television)
-        SettingsCard(
-          children: [
-            SwitchTile(
-              title: '离开应用时自动小窗',
-              subtitle: '播放中回到桌面时自动进入画中画',
-              value: preferences.autoPictureInPicture,
-              onChanged: (value) => savePreferences(
-                preferences.copyWith(autoPictureInPicture: value),
+            if (Platform.isWindows || Platform.isMacOS) ...[
+              ValueListenableBuilder(
+                valueListenable: windowOnTop,
+                builder: (context, enabled, _) => SwitchTile(
+                  title: '窗口置顶',
+                  subtitle: '窗口始终显示在其他窗口上方，重启应用后仍然生效',
+                  value: enabled,
+                  onChanged: (value) =>
+                      saveSetting(context, () => setWindowOnTop(value)),
+                ),
               ),
-            ),
-          ],
-        ),
-      if (Platform.isWindows || Platform.isMacOS)
-        SettingsCard(
-          children: [
-            ValueListenableBuilder(
-              valueListenable: windowOnTop,
-              builder: (context, enabled, _) => SwitchTile(
-                title: '窗口置顶',
-                subtitle: '窗口始终显示在其他窗口上方，重启应用后仍然生效',
-                value: enabled,
-                onChanged: (value) =>
-                    saveSetting(context, () => setWindowOnTop(value)),
-              ),
-            ),
-            const BossKeyTile(),
+              const BossKeyTile(),
+            ],
           ],
         ),
     ];
