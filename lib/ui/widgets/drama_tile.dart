@@ -156,22 +156,22 @@ class DramaTile extends StatelessWidget {
   final bool autofocus;
 
   static TextStyle titleStyle(BuildContext context) => TextStyle(
-    fontSize: AppScope.of(context).television ? 15 : 14,
+    fontSize: AppScope.of(context).television ? 15 : 13,
     fontWeight: FontWeight.w600,
-    height: 1.3,
+    height: 1.25,
   );
 
   static TextStyle subtitleStyle(BuildContext context) => TextStyle(
-    fontSize: AppScope.of(context).television ? 13 : 12,
-    height: 1.3,
+    fontSize: AppScope.of(context).television ? 13 : 11.5,
+    height: 1.25,
     color: Theme.of(context).colorScheme.onSurfaceVariant,
   );
 
   static double extentFor(BuildContext context, double width) {
     final scaler = MediaQuery.textScalerOf(context);
-    final title = scaler.scale(titleStyle(context).fontSize!) * 1.3 * 2;
-    final subtitle = scaler.scale(subtitleStyle(context).fontSize!) * 1.3;
-    return (width * 1.5 + 9 + title + 4 + subtitle).ceilToDouble();
+    final title = scaler.scale(titleStyle(context).fontSize!) * 1.25 * 3;
+    final subtitle = scaler.scale(subtitleStyle(context).fontSize!) * 1.25;
+    return (width * 1.5 + 8 + title + 3 + subtitle).ceilToDouble();
   }
 
   @override
@@ -195,9 +195,9 @@ class DramaTile extends StatelessWidget {
     focusNode: focusNode,
     autofocus: autofocus,
     caption: [
-      const SizedBox(height: 9),
-      _line(context, drama.title, titleStyle(context), 2),
-      const SizedBox(height: 4),
+      const SizedBox(height: 8),
+      _line(context, drama.title, titleStyle(context), 3),
+      const SizedBox(height: 3),
       _line(context, subtitle ?? drama.category, subtitleStyle(context), 1),
     ],
   );
