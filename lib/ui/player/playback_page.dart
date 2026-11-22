@@ -275,10 +275,11 @@ class _PlaybackPageState extends State<PlaybackPage> {
       };
     }
     final portraitStyle = widget.store.playbackPreferences.portraitStyleForWide;
+    final usePortraitFeed = _session.aspectKnown && !_wideVideo;
     return switch (form) {
       FormFactor.pad || FormFactor.window => _padPage(context, mini),
       FormFactor.phone
-          when _wideVideo &&
+          when !usePortraitFeed &&
               !(portraitStyle &&
                   MediaQuery.orientationOf(context) == Orientation.portrait) =>
         LandscapePlayerPage(

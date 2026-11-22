@@ -387,8 +387,9 @@ class ExplorePageState extends State<ExplorePage> {
     }
     final phone = AppScope.formFactorOf(context) == FormFactor.phone;
     final desktop = AppScope.formFactorOf(context) == FormFactor.window;
-    final hero = _hero(explore, phone: phone);
-    final items = phone && explore.recommending && explore.featured == null
+    final isFirstTab = explore.tabs.isNotEmpty && explore.tab.id == explore.tabs.first.id;
+    final hero = _hero(explore, phone: phone, isFirstTab: isFirstTab);
+    final items = phone && isFirstTab && explore.featured == null
         ? explore.items.skip(1).toList()
         : explore.items;
     return _grid(
@@ -565,7 +566,11 @@ class ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  Widget? _hero(ExploreFeed explore, {required bool phone}) {
+  Widget? _hero(
+    ExploreFeed explore, {
+    required bool phone,
+    required bool isFirstTab,
+  }) {
     if (!phone) {
       if (explore.resume case final entry?) {
         final drama = entry.drama;
@@ -588,7 +593,7 @@ class ExplorePageState extends State<ExplorePage> {
       }
     }
     final featured = explore.featured ??
-        (phone && explore.recommending ? explore.feed?.items.firstOrNull : null);
+        (phone && isFirstTab ? explore.feed?.items.firstOrNull : null);
     if (featured case final drama?) {
       final feedItems = explore.feed?.items ?? const <Drama>[];
       final carousel = phone && feedItems.length > 1

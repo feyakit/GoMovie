@@ -465,6 +465,7 @@ class _PhoneCarouselHeroState extends State<_PhoneCarouselHero> {
                       Expanded(
                         child: PageView.builder(
                           controller: _controller,
+                          physics: const BouncingScrollPhysics(),
                           itemCount: items.length,
                           onPageChanged: (index) =>
                               setState(() => _page = index),
