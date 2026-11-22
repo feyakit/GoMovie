@@ -11,6 +11,7 @@ import '../../playback_session.dart';
 import '../../webview_bridge.dart';
 import '../app_scope.dart';
 import '../netdisk/netdisk_page.dart';
+import '../settings/settings_page.dart';
 import '../settings/sorani_account_view.dart';
 import '../theme/motion.dart';
 import '../widgets/contained_slider.dart';
@@ -1167,9 +1168,8 @@ class PlaybackLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = session.loadingMessage.isNotEmpty
-        ? session.loadingMessage
-        : '正在缓冲视频…';
+    final message = session.routeNotice ??
+        (session.loadingMessage.isNotEmpty ? session.loadingMessage : '正在缓冲视频…');
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -1185,20 +1185,24 @@ class PlaybackLoading extends StatelessWidget {
           ),
         ),
         Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                message,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
@@ -1318,6 +1322,12 @@ class PlaybackFailure extends StatelessWidget {
                       focusNode: retryFocus,
                       onPressed: session.retry,
                       child: Text(session.localFailure ? '重试本地播放' : '重试'),
+                    ),
+                  if (!session.localFailure)
+                    OutlinedButton.icon(
+                      onPressed: () => openProxySettings(context, session.store),
+                      icon: const Icon(Icons.language_rounded, size: 18),
+                      label: const Text('网络代理'),
                     ),
                   if (session.localFailure)
                     TextButton(

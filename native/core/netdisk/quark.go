@@ -16,7 +16,9 @@ import (
 const (
 	quarkUA     = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 	quarkAPI    = "https://drive-pc.quark.cn/1/clouddrive/"
+	ucAPI       = "https://pc-api.uc.cn/1/clouddrive/"
 	quarkPR     = "?pr=ucpro&fr=pc"
+	ucPR        = "?pr=UCBrowser&fr=pc"
 	quarkTmpDir = "gomovie_tmp"
 )
 
@@ -45,17 +47,69 @@ type Playback struct {
 }
 
 var (
-	shareIDPattern  = regexp.MustCompile(`pan\.quark\.cn/s/([A-Za-z0-9]+)`)
-	passcodePattern = regexp.MustCompile(`(?:pwd=|passcode=|提取码[：:\s]*)([A-Za-z0-9]{4})`)
+	shareIDPattern   = regexp.MustCompile(`pan\.quark\.cn/s/([A-Za-z0-9]+)`)
+	ucShareIDPattern = regexp.MustCompile(`drive\.uc\.cn/s/([A-Za-z0-9]+)`)
+	passcodePattern  = regexp.MustCompile(`(?:pwd=|passcode=|提取码[：:\s]*)([A-Za-z0-9]{4})`)
 )
 
-// Quark 是夸克网盘客户端。creds 为空表示游客（只能解析列表）。
+// Quark 是夸克 / UC 网盘客户端。creds 为空表示游客（只能解析列表）。
 type Quark struct {
-	creds *Credentials
+	creds    *Credentials
+	provider string
+	apiBase  string
+	referer  string
+	prQuery  string
 }
 
-// NewQuark 用给定凭据构造客户端，可为 nil。
-func NewQuark(creds *Credentials) *Quark { return &Quark{creds: creds} }
+// NewQuark 用给定凭据构造夸克网盘客户端，可为 nil。
+func NewQuark(creds *Credentials) *Quark {
+	return &Quark{
+		creds:    creds,
+		provider: "quark",
+		apiBase:  quarkAPI,
+		referer:  "https://pan.quark.cn/",
+		prQuery:  quarkPR,
+	}
+}
+
+// NewUC 用给定凭据构造 UC 网盘客户端，可为 nil。
+func NewUC(creds *Credentials) *Quark {
+	return &Quark{
+		creds:    creds,
+		provider: "uc",
+		apiBase:  ucAPI,
+		referer:  "https://drive.uc.cn/",
+		prQuery:  ucPR,
+	}
+}
+
+func (q *Quark) api() string {
+	if q.apiBase != "" {
+		return q.apiBase
+	}
+	return quarkAPI
+}
+
+func (q *Quark) ref() string {
+	if q.referer != "" {
+		return q.referer
+	}
+	return "https://pan.quark.cn/"
+}
+
+func (q *Quark) pr() string {
+	if q.prQuery != "" {
+		return q.prQuery
+	}
+	return quarkPR
+}
+
+func (q *Quark) prov() string {
+	if q.provider != "" {
+		return q.provider
+	}
+	return "quark"
+}
 
 type quarkReply struct {
 	Status  int             `json:"status"`
@@ -75,12 +129,12 @@ func (q *Quark) do(ctx context.Context, path string, body any) (*quarkReply, err
 		reader = strings.NewReader(string(payload))
 		method = http.MethodPost
 	}
-	req, err := http.NewRequest(method, quarkAPI+path, reader)
+	req, err := http.NewRequest(method, q.api()+path, reader)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("User-Agent", quarkUA)
-	req.Header.Set("Referer", "https://pan.quark.cn/")
+	req.Header.Set("Referer", q.ref())
 	req.Header.Set("Accept", "application/json, text/plain, */*")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -104,9 +158,12 @@ func (q *Quark) do(ctx context.Context, path string, body any) (*quarkReply, err
 	return out, nil
 }
 
-// ParseShareURL 从分享链接里取出 shareID 与提取码。
+// ParseShareURL 从夸克或 UC 网盘分享链接里取出 shareID 与提取码。
 func ParseShareURL(raw string) (string, string, error) {
 	m := shareIDPattern.FindStringSubmatch(raw)
+	if m == nil {
+		m = ucShareIDPattern.FindStringSubmatch(raw)
+	}
 	if m == nil {
 		return "", "", ErrBadShare
 	}
@@ -118,7 +175,7 @@ func ParseShareURL(raw string) (string, string, error) {
 }
 
 func (q *Quark) shareToken(ctx context.Context, shareID, pwd string) (string, error) {
-	r, err := q.do(ctx, "share/sharepage/token"+quarkPR,
+	r, err := q.do(ctx, "share/sharepage/token"+q.pr(),
 		map[string]any{"pwd_id": shareID, "passcode": pwd})
 	if err != nil {
 		return "", err
@@ -148,7 +205,7 @@ type quarkFile struct {
 
 func (q *Quark) listDir(ctx context.Context, shareID, stoken, fid string, page int) ([]quarkFile, error) {
 	qy := fmt.Sprintf("share/sharepage/detail%s&pwd_id=%s&stoken=%s&pdir_fid=%s&force=0&_page=%d&_size=200&_sort=file_type:asc,file_name:asc",
-		quarkPR, shareID, url.QueryEscape(stoken), fid, page)
+		q.pr(), shareID, url.QueryEscape(stoken), fid, page)
 	r, err := q.do(ctx, qy, nil)
 	if err != nil {
 		return nil, err
@@ -206,7 +263,7 @@ func (q *Quark) Share(ctx context.Context, raw string) (*ShareInfo, error) {
 	if err := q.walk(ctx, shareID, stoken, "0", 0, &files); err != nil {
 		return nil, err
 	}
-	info := &ShareInfo{Provider: "quark", ShareID: shareID, LoggedIn: q.creds != nil}
+	info := &ShareInfo{Provider: q.prov(), ShareID: shareID, LoggedIn: q.creds != nil}
 	for _, f := range files {
 		info.Episodes = append(info.Episodes, Episode{
 			FID: f.FID, Token: f.ShareTok, Name: f.FileName,
@@ -220,7 +277,7 @@ func (q *Quark) Share(ctx context.Context, raw string) (*ShareInfo, error) {
 }
 
 func (q *Quark) ensureTmpDir(ctx context.Context) (string, error) {
-	r, err := q.do(ctx, "file/sort"+quarkPR+"&pdir_fid=0&_page=1&_size=200&_sort=file_type:asc,updated_at:desc", nil)
+	r, err := q.do(ctx, "file/sort"+q.pr()+"&pdir_fid=0&_page=1&_size=200&_sort=file_type:asc,updated_at:desc", nil)
 	if err != nil {
 		return "", err
 	}
@@ -233,7 +290,7 @@ func (q *Quark) ensureTmpDir(ctx context.Context) (string, error) {
 			return item.FID, nil
 		}
 	}
-	c, err := q.do(ctx, "file"+quarkPR,
+	c, err := q.do(ctx, "file"+q.pr(),
 		map[string]any{"pdir_fid": "0", "file_name": quarkTmpDir, "dir_path": "", "dir_init_lock": false})
 	if err != nil {
 		return "", err
@@ -257,7 +314,7 @@ func (q *Quark) Save(ctx context.Context, shareID, stoken string, ep Episode) (s
 	if err != nil {
 		return "", err
 	}
-	r, err := q.do(ctx, "share/sharepage/save"+quarkPR, map[string]any{
+	r, err := q.do(ctx, "share/sharepage/save"+q.pr(), map[string]any{
 		"fid_list":       []string{ep.FID},
 		"fid_token_list": []string{ep.Token},
 		"to_pdir_fid":    toFID,
@@ -281,7 +338,7 @@ func (q *Quark) Save(ctx context.Context, shareID, stoken string, ep Episode) (s
 	}
 	for i := 0; i < 5; i++ {
 		time.Sleep(time.Second)
-		t, err := q.do(ctx, fmt.Sprintf("task%s&task_id=%s&retry_index=%d", quarkPR, saved.TaskID, i), nil)
+		t, err := q.do(ctx, fmt.Sprintf("task%s&task_id=%s&retry_index=%d", q.pr(), saved.TaskID, i), nil)
 		if err != nil {
 			continue
 		}
@@ -303,7 +360,7 @@ func (q *Quark) PlayURL(ctx context.Context, fid string) (*Playback, error) {
 	if q.creds == nil {
 		return nil, ErrNotLoggedIn
 	}
-	r, err := q.do(ctx, "file/v2/play"+quarkPR, map[string]any{
+	r, err := q.do(ctx, "file/v2/play"+q.pr(), map[string]any{
 		"fid":         fid,
 		"resolutions": "normal,low,high,super,2k,4k",
 		"supports":    "fmp4",
@@ -325,7 +382,7 @@ func (q *Quark) PlayURL(ctx context.Context, fid string) (*Playback, error) {
 				URL: item.VideoInfo.URL,
 				Headers: map[string]string{
 					"User-Agent": quarkUA,
-					"Referer":    "https://pan.quark.cn/",
+					"Referer":    q.ref(),
 					"Cookie":     q.creds.Header(),
 				},
 			}, nil

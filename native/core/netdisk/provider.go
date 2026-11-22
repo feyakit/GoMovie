@@ -67,9 +67,12 @@ func DetectProvider(raw string) string {
 	}
 }
 
-func (q *Quark) ID() string { return "quark" }
+func (q *Quark) ID() string { return q.prov() }
 
-func (q *Quark) Match(rawURL string) bool { return DetectProvider(rawURL) == "quark" }
+func (q *Quark) Match(rawURL string) bool {
+	p := DetectProvider(rawURL)
+	return p == "quark" || p == "uc"
+}
 
 // CleanupTemp 清理夸克网盘根目录下的 gomovie_tmp 临时目录，返回清理的文件数。
 func (q *Quark) CleanupTemp(ctx context.Context) (int, error) {

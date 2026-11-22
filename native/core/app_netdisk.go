@@ -113,10 +113,18 @@ func (engine *nativeEngine) netdiskLogout(provider string) (bool, error) {
 	return true, rt.store.Clear(provider)
 }
 
-func (engine *nativeEngine) netdiskClient() (*netdisk.Quark, error) {
+func (engine *nativeEngine) netdiskClientFor(raw string) (*netdisk.Quark, error) {
 	rt, err := engine.netdiskInit()
 	if err != nil {
 		return nil, err
+	}
+	provider := netdisk.DetectProvider(raw)
+	if provider == "uc" {
+		creds, err := rt.store.Get("uc")
+		if err != nil || !netdisk.ProviderReady(creds) {
+			creds, _ = rt.store.Get("quark")
+		}
+		return netdisk.NewUC(creds), nil
 	}
 	creds, err := rt.store.Get("quark")
 	if err != nil {
@@ -130,7 +138,7 @@ func (engine *nativeEngine) netdiskShare(ctx context.Context, raw string) (any, 
 	if raw == "" {
 		return nil, errors.New("请填写网盘分享链接")
 	}
-	client, err := engine.netdiskClient()
+	client, err := engine.netdiskClientFor(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +154,7 @@ func (engine *nativeEngine) netdiskOpenShare(ctx context.Context, raw string) (m
 	if shareURL == "" {
 		return nil, errors.New("请填写网盘分享链接")
 	}
-	client, err := engine.netdiskClient()
+	client, err := engine.netdiskClientFor(shareURL)
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +163,10 @@ func (engine *nativeEngine) netdiskOpenShare(ctx context.Context, raw string) (m
 		return nil, err
 	}
 	drama, chapters := shareInfoToDrama("netdisk", shareURL, info)
+	badge := "夸克网盘"
+	if info.Provider == "uc" {
+		badge = "UC网盘"
+	}
 	libDrama := LibraryDrama{
 		ID:            drama.ID,
 		Source:        "netdisk",
@@ -163,7 +175,7 @@ func (engine *nativeEngine) netdiskOpenShare(ctx context.Context, raw string) (m
 		Description:   drama.Desc,
 		Episodes:      len(chapters),
 		Category:      "网盘分享",
-		Badge:         "夸克网盘",
+		Badge:         badge,
 		ReleaseStatus: "已完结",
 	}
 	return map[string]any{
@@ -178,18 +190,10 @@ func (engine *nativeEngine) netdiskPlay(ctx context.Context, raw string, index i
 	if raw == "" {
 		return nil, errors.New("请填写网盘分享链接")
 	}
-	rt, err := engine.netdiskInit()
+	client, err := engine.netdiskClientFor(raw)
 	if err != nil {
 		return nil, err
 	}
-	creds, err := rt.store.Get("quark")
-	if err != nil {
-		return nil, err
-	}
-	if !netdisk.ProviderReady(creds) {
-		return nil, errors.New("网盘登录态不完整，请重新扫码登录")
-	}
-	client := netdisk.NewQuark(creds)
 	return client.ResolveShare(ctx, raw, index)
 }
 
@@ -236,7 +240,11 @@ func formatNetdiskSize(bytes int64) string {
 func shareInfoToDrama(source, shareURL string, info *netdisk.ShareInfo) (Drama, []Chapter) {
 	title := strings.TrimSpace(info.Title)
 	if title == "" {
-		title = "夸克分享 (" + info.ShareID + ")"
+		prefix := "夸克分享"
+		if info.Provider == "uc" {
+			prefix = "UC分享"
+		}
+		title = prefix + " (" + info.ShareID + ")"
 	}
 	drama := Drama{
 		ID:       source + ":" + shareURL,

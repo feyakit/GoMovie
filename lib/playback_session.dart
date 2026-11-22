@@ -225,6 +225,8 @@ class PlaybackSession extends ChangeNotifier {
   bool _staleAudio = false;
   bool _stalled = false;
   String _loadingMessage = '正在准备播放';
+  String? _routeNotice;
+  Timer? _routeNoticeTimer;
   String? _error;
   String? _saveWarning;
   String? _savedProgressKey;
@@ -251,8 +253,19 @@ class PlaybackSession extends ChangeNotifier {
   Episode get episode => detail.episodes[_index];
   bool get loading => _loading;
   String get loadingMessage => _loadingMessage;
+  String? get routeNotice => _routeNotice;
   String? get error => _error;
   bool get localFailure => _localFailure;
+
+  void _setRouteNotice(String text) {
+    _routeNoticeTimer?.cancel();
+    _routeNotice = text;
+    _routeNoticeTimer = Timer(const Duration(seconds: 4), () {
+      if (_closed) return;
+      _routeNotice = null;
+      _notify();
+    });
+  }
   bool get loginRequired => _loginRequired;
   String? get saveWarning => _saveWarning;
   bool get ready => !_loading && _error == null;
@@ -672,6 +685,14 @@ class PlaybackSession extends ChangeNotifier {
       '[Play] 自动恢复 原因=$reason 处理=${action.name} 线路=${current.routeIndex + 1}/${current.routeCount}',
     );
     if (action != PlaybackRecoveryAction.stop) {
+      if (action == PlaybackRecoveryAction.alternative) {
+        final total = current.routeCount > 0 ? current.routeCount : 1;
+        final next = (current.routeIndex + 2).clamp(1, total);
+        _setRouteNotice('当前线路异常，已自动切换至线路 $next/$total');
+      } else {
+        _setRouteNotice('当前线路卡顿，正在刷新播放地址…');
+      }
+      _notify();
       await play(_index, position: position, recovery: action);
       return;
     }
@@ -701,7 +722,7 @@ class PlaybackSession extends ChangeNotifier {
     };
     _error = current.local
         ? '$symptom，本地视频没能播放。可重试或重新下载，也可以改为在线播放。'
-        : '$symptom，自动恢复未成功。可重试、换一集或选择其他清晰度。';
+        : '$symptom，所有可用线路均已尝试失败。\n国内站源请在站源面板长按设为「直连」，海外站源（如 Hanime1 / MissAV / 青空）请检查代理或设为「代理」。';
     _notify();
   }
 
@@ -1569,6 +1590,7 @@ class PlaybackSession extends ChangeNotifier {
     _seekWatchdog?.cancel();
     _volumeTimer?.cancel();
     _sleepTimer?.cancel();
+    _routeNoticeTimer?.cancel();
     _standbyIdleTimer?.cancel();
     _resumeTimer?.cancel();
     if (_volumeTimer != null) _saveVolume();

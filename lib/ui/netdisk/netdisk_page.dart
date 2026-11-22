@@ -384,8 +384,8 @@ class _NetdiskPageState extends State<NetdiskPage> {
                     TextField(
                       controller: _link,
                       decoration: const InputDecoration(
-                        labelText: '粘贴夸克分享链接',
-                        hintText: 'https://pan.quark.cn/s/xxxx',
+                        labelText: '粘贴夸克 / UC 网盘分享链接',
+                        hintText: 'https://pan.quark.cn/s/xxxx 或 https://drive.uc.cn/s/xxxx',
                         border: OutlineInputBorder(),
                         isDense: true,
                       ),
