@@ -672,9 +672,6 @@ func (p *tvboxProvider) expandNetdiskShare(ctx context.Context, dramaID, routeNa
 	for i, ep := range info.Episodes {
 		*globalIndex++
 		title := ep.Name
-		if sizeText := formatNetdiskSize(ep.Size); sizeText != "" {
-			title += " · " + sizeText
-		}
 		if routeName != "" {
 			title = routeName + " · " + title
 		}

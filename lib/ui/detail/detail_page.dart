@@ -1279,12 +1279,19 @@ class _DetailPageState extends State<DetailPage> {
     final activeRoute = scope != null && scope.routes.length > 1
         ? scope.routes.firstWhere((route) => route.name == scope.routeName)
         : null;
+    final isNetdisk = activeRoute != null
+        ? activeRoute.entries.any(
+            (e) => e.episode.videoUrl.startsWith('netdisk://'),
+          )
+        : details.episodes.any((e) => e.videoUrl.startsWith('netdisk://'));
+    final unit = isNetdisk ? '个文件' : '集';
     final summary = [
       if (activeRoute != null)
-        '${activeRoute.entries.length} 集 · ${scope!.routes.length} 条线路'
+        '${activeRoute.entries.length} $unit · ${scope!.routes.length} 条线路'
       else
-        '${details.episodes.length} 集',
-      if (current != null) '当前第 ${details.episodes[current].number} 集',
+        '${details.episodes.length} $unit',
+      if (current != null && !isNetdisk)
+        '当前第 ${details.episodes[current].number} 集',
     ].join(' · ');
     return Row(
       mainAxisSize: MainAxisSize.min,
