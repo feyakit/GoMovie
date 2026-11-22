@@ -770,33 +770,53 @@ class _DetailPageState extends State<DetailPage> {
         children: [
           CoverBackdrop(
             drama: drama,
-            sigma: 36,
-            opacity: theme.brightness == Brightness.dark ? 0.55 : 0.45,
+            sigma: 28,
+            opacity: theme.brightness == Brightness.dark ? 0.68 : 0.5,
             overlay: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [surface.withValues(alpha: .2), surface],
+              colors: [surface.withValues(alpha: .15), surface],
             ),
           ),
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _cover(drama, detailPhoneMetrics, hero: false),
-                  const SizedBox(height: 20),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x73000000),
+                          blurRadius: 32,
+                          offset: Offset(0, 14),
+                        ),
+                      ],
+                    ),
+                    child: SizedBox(
+                      width: 188,
+                      height: 282,
+                      child: DramaCover(
+                        drama: drama,
+                        radius: 18,
+                        details: false,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     drama.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 18),
                   const SizedBox.square(
                     dimension: 24,
                     child: CircularProgressIndicator(strokeWidth: 2.5),
