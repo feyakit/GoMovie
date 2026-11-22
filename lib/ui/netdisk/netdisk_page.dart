@@ -225,10 +225,9 @@ class _NetdiskPageState extends State<NetdiskPage> {
   Future<void> _play(int index) async {
     setState(() => _loading = true);
     try {
-      final data = await AppScope.of(context).repository.netdiskPlay(
-        _shareUrl,
-        index,
-      );
+      final data = await AppScope.of(
+        context,
+      ).repository.netdiskPlay(_shareUrl, index);
       final url = data['url'] as String? ?? '';
       final headers = <String, String>{
         for (final row in (data['headers'] as Map? ?? const {}).entries)

@@ -9,7 +9,7 @@ import 'source_picker.dart';
 
 Future<void> pickSource(BuildContext anchor, LocalStore store) async {
   final value = await SourcePicker.show(anchor, store);
-  if (value == null) return;
+  if (value == null || !anchor.mounted) return;
   if (value == SourcePicker.manageSourceId) {
     await openPage<void>(anchor, (_) => ModulesPage(store: store));
     return;

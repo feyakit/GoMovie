@@ -469,7 +469,7 @@ class FocusRing extends StatefulWidget {
     required this.radius,
     required this.child,
     this.offset = 3,
-    this.scale = 1.06,
+    this.scale = 1,
   });
   final double radius;
   final Widget child;
@@ -529,7 +529,7 @@ class FocusPill extends StatelessWidget {
             television && selected && focusVisible(focusNode.hasPrimaryFocus);
         final style = DefaultTextStyle.of(context).style.merge(textStyle);
         return AnimatedScale(
-          scale: focused ? 1.06 : 1,
+          scale: 1,
           duration: duration,
           child: AnimatedContainer(
             duration: duration,

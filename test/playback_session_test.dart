@@ -206,6 +206,25 @@ void main() {
     expect(session.qualityLabel, '720P');
   });
 
+  test('completion stays on the episode when auto advance is off', () async {
+    final repository = _PlaybackRepository();
+    final store = await openStore();
+    await store.setPlaybackPreferences(
+      store.playbackPreferences.copyWith(autoAdvance: false),
+    );
+    final (session, player) = await _open(repository, store);
+    await _settle(player);
+
+    player.finish();
+    await pumpEventQueue();
+
+    expect(session.index, 0);
+    expect(repository.resolved, hasLength(1));
+    await session.setSpeed(1.5);
+    expect(store.playbackPreferences.autoAdvance, isFalse);
+    expect(store.playbackPreferences.speed, 1.5);
+  });
+
   test('speed changes are saved and applied unless boosting', () async {
     final repository = _PlaybackRepository();
     final store = await openStore();

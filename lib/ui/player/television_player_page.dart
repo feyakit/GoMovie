@@ -16,6 +16,7 @@ import 'playback_handle.dart';
 import 'player_status.dart';
 import 'player_surface.dart';
 import 'player_video.dart';
+import 'television_episode_panel.dart';
 
 enum _Menu { speed, quality, fit }
 
@@ -67,6 +68,10 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
   Duration _seekFrom = Duration.zero;
   int _seekOffset = 0;
   bool _seekShown = false;
+  bool _panel = false;
+  bool _panelOnRoutes = false;
+  String _panelRoute = '';
+  int _panelCursor = 0;
 
   PlaybackSession get _session => widget.handle.session;
 
@@ -162,6 +167,17 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
     setState(() => _visible = false);
   }
 
+  void _revealProgress() {
+    _hideTimer?.cancel();
+    setState(() => _visible = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _visible && _menu == null && !_panel) {
+        _bar.requestFocus();
+      }
+    });
+    _scheduleHide();
+  }
+
   void _reveal({bool force = false}) {
     if (_visible && !force) return _scheduleHide();
     setState(() => _visible = true);
@@ -172,11 +188,121 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
   }
 
   void _back() {
-    if (_menu != null) {
+    if (_panel) {
+      setState(() => _panel = false);
+      _surface.requestFocus();
+    } else if (_menu != null) {
       _closeMenu();
     } else if (_visible) {
       _hide();
     }
+  }
+
+  List<TelevisionEpisodeChoice> get _choices =>
+      televisionEpisodeChoices(_session.detail.episodes);
+
+  List<TelevisionEpisodeChoice> get _visibleChoices => [
+    for (final choice in _choices)
+      if (choice.route == _panelRoute) choice,
+  ];
+
+  List<String> get _routes {
+    final names = <String>[];
+    for (final choice in _choices) {
+      if (!names.contains(choice.route)) names.add(choice.route);
+    }
+    return names;
+  }
+
+  void _openPanel() {
+    final choices = _choices;
+    if (choices.isEmpty) {
+      _reveal();
+      return;
+    }
+    final current = choices
+        .where((choice) => choice.index == _session.index)
+        .firstOrNull;
+    final route = current?.route ?? choices.first.route;
+    final visible = [
+      for (final choice in choices)
+        if (choice.route == route) choice,
+    ];
+    final cursor = visible.indexWhere(
+      (choice) => choice.index == _session.index,
+    );
+    _hideTimer?.cancel();
+    setState(() {
+      _panel = true;
+      _visible = false;
+      _panelOnRoutes = false;
+      _panelRoute = route;
+      _panelCursor = cursor < 0 ? 0 : cursor;
+    });
+    _surface.requestFocus();
+  }
+
+  void _movePanel(LogicalKeyboardKey key) {
+    final routes = _routes;
+    final visible = _visibleChoices;
+    if (visible.isEmpty) return;
+    const columns = 6;
+    if (_panelOnRoutes) {
+      final index = routes.indexOf(_panelRoute);
+      if (key == LogicalKeyboardKey.arrowLeft ||
+          key == LogicalKeyboardKey.arrowRight) {
+        final step = key == LogicalKeyboardKey.arrowRight ? 1 : -1;
+        final next = (index + step).clamp(0, routes.length - 1);
+        setState(() {
+          _panelRoute = routes[next];
+          _panelCursor = 0;
+        });
+      } else if (key == LogicalKeyboardKey.arrowDown) {
+        setState(() => _panelOnRoutes = false);
+      }
+      return;
+    }
+    final row = _panelCursor ~/ columns;
+    final column = _panelCursor % columns;
+    var cursor = _panelCursor;
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      cursor = (cursor - 1).clamp(0, visible.length - 1);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      cursor = (cursor + 1).clamp(0, visible.length - 1);
+    } else if (key == LogicalKeyboardKey.arrowUp) {
+      if (row == 0 && routes.length > 1) {
+        setState(() => _panelOnRoutes = true);
+        return;
+      }
+      final next = (row - 1) * columns + column;
+      cursor = next < 0 ? cursor : next;
+    } else if (key == LogicalKeyboardKey.arrowDown) {
+      final next = (row + 1) * columns + column;
+      if (next < visible.length) cursor = next;
+    }
+    setState(() => _panelCursor = cursor);
+  }
+
+  void _confirmPanel() {
+    if (_panelOnRoutes) {
+      setState(() => _panelOnRoutes = false);
+      return;
+    }
+    final visible = _visibleChoices;
+    if (visible.isEmpty) return;
+    final choice = visible[_panelCursor.clamp(0, visible.length - 1)];
+    setState(() => _panel = false);
+    unawaited(_session.play(choice.index));
+    _surface.requestFocus();
+  }
+
+  bool get _panelMismatch {
+    final counts = <String, int>{};
+    for (final choice in _choices) {
+      counts[choice.route] = (counts[choice.route] ?? 0) + 1;
+    }
+    final values = counts.values.toSet();
+    return values.length > 1;
   }
 
   void _step(int seconds) {
@@ -348,6 +474,17 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         _step(-10);
         return KeyEventResult.handled;
     }
+    if (_panel) {
+      if (_confirms.contains(key)) {
+        if (down) _confirmPanel();
+        return KeyEventResult.handled;
+      }
+      if (_arrows.contains(key)) {
+        if (down) _movePanel(key);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
     if (_menu case final menu?) return _menuKey(menu, key);
     final horizontal = key == LogicalKeyboardKey.arrowLeft
         ? -1
@@ -359,8 +496,16 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         _step(horizontal * 10);
         return KeyEventResult.handled;
       }
-      if (_arrows.contains(key) || _confirms.contains(key)) {
-        if (down) _reveal();
+      if (key == LogicalKeyboardKey.arrowUp) {
+        if (down) _revealProgress();
+        return KeyEventResult.handled;
+      }
+      if (key == LogicalKeyboardKey.arrowDown) {
+        if (down) _openPanel();
+        return KeyEventResult.handled;
+      }
+      if (_confirms.contains(key)) {
+        if (down) _session.togglePlayback();
         return KeyEventResult.handled;
       }
       return KeyEventResult.ignored;
@@ -423,7 +568,7 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         builder: (context, _) {
           final failed = _session.error != null;
           return PopScope(
-            canPop: failed || !_visible && _menu == null,
+            canPop: failed || !_visible && _menu == null && !_panel,
             onPopInvokedWithResult: (didPop, _) {
               if (!didPop) _back();
             },
@@ -470,6 +615,14 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
                     ),
                     if (!_visible && _seekShown)
                       _progress(bottom: 27, focusable: false),
+                    if (_panel)
+                      TelevisionEpisodePanel(
+                        choices: _choices,
+                        route: _panelRoute,
+                        cursor: _panelCursor,
+                        onRoutes: _panelOnRoutes,
+                        mismatched: _panelMismatch,
+                      ),
                     ExcludeFocus(
                       excluding: !_visible || failed,
                       child: Visibility(

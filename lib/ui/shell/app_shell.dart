@@ -11,24 +11,23 @@ import '../../local_store.dart';
 import '../../models.dart';
 import '../app_scope.dart';
 import '../explore/explore_page.dart';
-import '../explore/source_actions.dart';
-import '../follow/follow_page.dart';
-import '../history/history_page.dart';
+import '../library/library_page.dart';
 import '../mine/mine_page.dart';
+import '../search/search_page.dart';
 import '../update_prompt.dart';
 import '../modules/module_install.dart';
 import '../widgets/bar_button.dart';
-import '../theme/app_theme.dart';
 import '../theme/motion.dart';
+import '../widgets/brand_mark.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/motion/motion_widgets.dart';
-import '../widgets/source_bar.dart';
+import '../widgets/phone_navigation_bar.dart';
 
 enum AppTab {
   explore('发现', Icons.explore_outlined, Icons.explore),
-  follow('追剧', Icons.bookmark_border_rounded, Icons.bookmark_rounded),
-  history('历史', Icons.history_rounded, Icons.history_rounded),
-  mine('我的', Icons.person_outline_rounded, Icons.person_rounded);
+  search('搜索', Icons.search_rounded, Icons.search),
+  library('片库', Icons.video_library_outlined, Icons.video_library_rounded),
+  manage('管理', Icons.tune_rounded, Icons.tune);
 
   const AppTab(this.label, this.icon, this.selectedIcon);
   final String label;
@@ -81,13 +80,12 @@ class _AppShellState extends State<AppShell> {
   ];
   final _tabFocus = [for (final _ in AppTab.values) FocusNode()];
   final _tabScrolls = [for (final _ in AppTab.values) ScrollController()];
-  final _followEntry = FocusNode();
-  final _mineEntry = FocusNode();
-  final _header = FocusNode();
-  final _televisionTabs = GlobalKey();
+  final _libraryEntry = FocusNode();
+  final _manageEntry = FocusNode();
+  final _rail = FocusNode();
   final _explore = GlobalKey<ExplorePageState>();
   var _tab = AppTab.explore;
-  var _headerFocused = false;
+  var _railFocused = false;
   FocusNode? _lastFocus;
   Timer? _exitWindow;
   DownloadOverview? _downloads;
@@ -139,9 +137,9 @@ class _AppShellState extends State<AppShell> {
     for (final hero in _heroes) {
       hero.dispose();
     }
-    _followEntry.dispose();
-    _mineEntry.dispose();
-    _header.dispose();
+    _libraryEntry.dispose();
+    _manageEntry.dispose();
+    _rail.dispose();
     _exitWindow?.cancel();
     _converter?.dispose();
     _merges?.dispose();
@@ -150,15 +148,7 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
-  List<AppTab> get _tabs => [
-    for (final tab in AppTab.values)
-      if (switch (tab) {
-        AppTab.history =>
-          widget.store.historyTab && !AppScope.of(context).television,
-        AppTab.explore || AppTab.follow || AppTab.mine => true,
-      })
-        tab,
-  ];
+  List<AppTab> get _tabs => AppTab.values;
 
   void _select(AppTab tab) => setState(() => _tab = tab);
 
@@ -199,7 +189,7 @@ class _AppShellState extends State<AppShell> {
     final focused = _lastFocus = FocusManager.instance.primaryFocus;
     final index = _tabFocus.indexWhere((node) => node == focused);
     if (index < 0) return;
-    if (previous?.ancestors.contains(_header) ?? false) {
+    if (previous?.ancestors.contains(_rail) ?? false) {
       _select(AppTab.values[index]);
     } else if (index != _tab.index) {
       _tabFocus[_tab.index].requestFocus();
@@ -211,13 +201,19 @@ class _AppShellState extends State<AppShell> {
     if (navigator != null && await navigator.maybePop()) return;
     if (!mounted) return;
     final television = AppScope.of(context).television;
-    if (_tab == AppTab.explore && (!television || _headerFocused)) {
+    if (television) {
+      if (!_railFocused) {
+        _tabFocus[_tab.index].requestFocus();
+        return;
+      }
       _armExit();
       return;
     }
-    if (_tab == AppTab.explore) _explore.currentState?.refresh();
+    if (_tab == AppTab.explore) {
+      _armExit();
+      return;
+    }
     _select(AppTab.explore);
-    if (television) _tabFocus.first.requestFocus();
   }
 
   void _armExit() {
@@ -236,19 +232,24 @@ class _AppShellState extends State<AppShell> {
 
   Widget _root(AppTab tab) => switch (tab) {
     AppTab.explore => ExplorePage(key: _explore, store: widget.store),
-    AppTab.follow => FollowPage(
+    AppTab.search => SearchPage(
       store: widget.store,
-      entryFocus: _followEntry,
-      onExitUp: _tabFocus[AppTab.follow.index].requestFocus,
+      source: SourceSite.byId(widget.store.source),
+      aggregate: true,
+      embedded: true,
     ),
-    AppTab.history => HistoryPage(store: widget.store, root: true),
-    AppTab.mine => MinePage(
+    AppTab.library => LibraryPage(
       store: widget.store,
       downloads: _downloads!,
       converter: _converter!,
       merges: _merges!,
-      entryFocus: _mineEntry,
-      onExitUp: _tabFocus[AppTab.mine.index].requestFocus,
+      entryFocus: _libraryEntry,
+      onExitUp: _tabFocus[AppTab.library.index].requestFocus,
+    ),
+    AppTab.manage => MinePage(
+      store: widget.store,
+      entryFocus: _manageEntry,
+      onExitUp: _tabFocus[AppTab.manage.index].requestFocus,
     ),
   };
 
@@ -297,9 +298,8 @@ class _AppShellState extends State<AppShell> {
     return PopScope(
       canPop:
           _exitWindow != null &&
-          _tab == AppTab.explore &&
           !covered &&
-          (!television || _headerFocused),
+          (television ? _railFocused : _tab == AppTab.explore),
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _back();
       },
@@ -308,67 +308,26 @@ class _AppShellState extends State<AppShell> {
           body: pages,
           bottomNavigationBar: covered
               ? null
-              : DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outlineVariant.withValues(alpha: 0.45),
+              : PhoneNavigationBar(
+                  destinations: [
+                    for (final tab in tabs)
+                      PhoneDestination(
+                        label: tab.label,
+                        badge: tab == AppTab.manage
+                            ? (_downloads?.active ?? 0)
+                            : 0,
                       ),
-                    ),
-                  ),
-                  child: NavigationBar(
-                    selectedIndex: tabs.indexOf(_tab),
-                    onDestinationSelected: (index) => _tap(tabs[index]),
-                    destinations: [
-                      for (final tab in tabs)
-                        NavigationDestination(
-                          key: ValueKey('nav-${tab.name}'),
-                          icon: _badged(tab, Icon(tab.icon)),
-                          selectedIcon: _badged(tab, Icon(tab.selectedIcon)),
-                          label: tab.label,
-                        ),
-                    ],
-                  ),
+                  ],
+                  selectedIndex: tabs.indexOf(_tab),
+                  onSelected: (index) => _tap(tabs[index]),
                 ),
         ),
         FormFactor.pad || FormFactor.window => _wide(pages),
         FormFactor.television => Scaffold(
           body: SafeArea(
-            child: Column(
+            child: Row(
               children: [
-                if (!covered)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      televisionInset,
-                      27,
-                      televisionInset,
-                      8,
-                    ),
-                    child: Focus(
-                      focusNode: _header,
-                      canRequestFocus: false,
-                      skipTraversal: true,
-                      onFocusChange: (focused) =>
-                          setState(() => _headerFocused = focused),
-                      onKeyEvent: (_, event) {
-                        final entry = switch (_tab) {
-                          AppTab.follow => _followEntry,
-                          AppTab.mine => _mineEntry,
-                          AppTab.explore || AppTab.history => null,
-                        };
-                        if (event is KeyUpEvent ||
-                            event.logicalKey != LogicalKeyboardKey.arrowDown ||
-                            entry?.context == null) {
-                          return KeyEventResult.ignored;
-                        }
-                        revealFocus(entry!);
-                        return KeyEventResult.handled;
-                      },
-                      child: _televisionHeader(),
-                    ),
-                  ),
+                if (!covered) _televisionRail(),
                 Expanded(child: pages),
               ],
             ),
@@ -378,36 +337,55 @@ class _AppShellState extends State<AppShell> {
     );
   }
 
-  Widget _badged(AppTab tab, Widget icon) => tab == AppTab.mine
+  Widget _badged(AppTab tab, Widget icon) => tab == AppTab.manage
       ? _DownloadBadge(downloads: _downloads!, child: icon)
       : icon;
 
-  Widget _televisionHeader() {
-    final tabs = Row(
-      key: _televisionTabs,
-      spacing: 6,
-      children: [
-        for (final tab in _tabs)
-          _TelevisionTab(
-            tab: tab,
-            selected: tab == _tab,
-            focusNode: _tabFocus[tab.index],
-            onTap: () => _select(tab),
+  Widget _televisionRail() {
+    final colors = Theme.of(context).colorScheme;
+    return Focus(
+      focusNode: _rail,
+      canRequestFocus: false,
+      skipTraversal: true,
+      onFocusChange: (focused) => setState(() => _railFocused = focused),
+      onKeyEvent: (_, event) {
+        final entry = switch (_tab) {
+          AppTab.library => _libraryEntry,
+          AppTab.manage => _manageEntry,
+          AppTab.explore || AppTab.search => null,
+        };
+        if (event is KeyUpEvent ||
+            event.logicalKey != LogicalKeyboardKey.arrowRight ||
+            entry?.context == null) {
+          return KeyEventResult.ignored;
+        }
+        revealFocus(entry!);
+        return KeyEventResult.handled;
+      },
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: colors.outlineVariant)),
+        ),
+        child: SizedBox(
+          width: 112,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 18, 12, 18),
+            child: Column(
+              children: [
+                const BrandMark(size: 44),
+                const SizedBox(height: 22),
+                for (final tab in _tabs)
+                  _TelevisionTab(
+                    tab: tab,
+                    selected: tab == _tab,
+                    focusNode: _tabFocus[tab.index],
+                    onTap: () => _select(tab),
+                  ),
+              ],
+            ),
           ),
-      ],
-    );
-    final store = widget.store;
-    if (store.source.isEmpty) {
-      return SizedBox(height: 48, child: tabs);
-    }
-    final source = SourceSite.byId(store.source);
-    return SourceBar(
-      source: source.name,
-      televisionLeading: tabs,
-      onSwitchSource: (anchor) => pickSource(anchor, store),
-      onOpenSearch: () => openSearch(context, store, source),
-      onSearchSubmitted: (query) =>
-          openSearch(context, store, source, query: query),
+        ),
+      ),
     );
   }
 
@@ -592,41 +570,9 @@ class _SideBarState extends State<_SideBar> {
                                         curve: Motion.enter,
                                       )
                                     : Motion.exit,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    DecoratedBox(
-                                      decoration: BoxDecoration(
-                                        gradient: AppTheme.brandGradient,
-                                        borderRadius: BorderRadius.circular(7),
-                                      ),
-                                      child: const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: Icon(
-                                          Icons.play_arrow_rounded,
-                                          size: 16,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        'GoMovie',
-                                        maxLines: 1,
-                                        softWrap: false,
-                                        overflow: TextOverflow.clip,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w800,
-                                              letterSpacing: -0.2,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
+                                child: const BrandLockup(
+                                  markSize: 28,
+                                  fontSize: 18,
                                 ),
                               ),
                             ),
@@ -714,7 +660,7 @@ class _SideItem extends StatelessWidget {
                     child: Center(
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          gradient: AppTheme.brandGradient,
+                          color: colors.primary,
                           borderRadius: BorderRadius.circular(99),
                         ),
                         child: const SizedBox(width: 3.5, height: 18),
@@ -736,11 +682,7 @@ class _SideItem extends StatelessWidget {
                               alwaysIncludeSemantics: true,
                               duration: Motion.of(context, Motion.short),
                               curve: expanded
-                                  ? const Interval(
-                                      0.4,
-                                      1,
-                                      curve: Motion.enter,
-                                    )
+                                  ? const Interval(0.4, 1, curve: Motion.enter)
                                   : Motion.exit,
                               child: AnimatedDefaultTextStyle(
                                 duration: duration,
@@ -826,28 +768,60 @@ class _TelevisionTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Semantics(
-      selected: selected,
-      child: FocusPill(
-        focusNode: focusNode,
+    final colors = Theme.of(context).colorScheme;
+    return ListenableBuilder(
+      listenable: focusNode,
+      builder: (context, _) => Semantics(
         selected: selected,
-        textStyle: theme.textTheme.titleMedium?.copyWith(
-          fontSize: 16,
-          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-        child: InkWell(
-          key: ValueKey('nav-${tab.name}'),
-          focusNode: focusNode,
-          autofocus: tab == AppTab.explore,
-          focusColor: Colors.transparent,
-          onTap: onTap,
-          child: Container(
-            height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-            alignment: Alignment.center,
-            child: Text(tab.label),
+        label: tab.label,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              key: ValueKey('nav-${tab.name}'),
+              focusNode: focusNode,
+              autofocus: tab == AppTab.explore,
+              focusColor: Colors.transparent,
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12),
+              child: FocusOutline(
+                visible: focusVisible(focusNode.hasFocus),
+                radius: 12,
+                child: SizedBox(
+                  height: 48,
+                  child: Row(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 3,
+                        height: selected ? 22 : 0,
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          tab.label,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: selected
+                                ? FontWeight.w800
+                                : FontWeight.w500,
+                            color: selected
+                                ? colors.primary
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

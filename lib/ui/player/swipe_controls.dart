@@ -12,6 +12,12 @@ import 'player_surface.dart';
 const _seekSpan = 120000;
 const _episodeSwipeDistance = 60.0;
 
+/// 距屏幕左右边缘这么近的水平拖动让给系统返回，不拿来 seek。
+const seekGestureEdgeInset = 24.0;
+
+bool seekGestureYieldsToSystem(double x, double width) =>
+    width > 0 && (x < seekGestureEdgeInset || x > width - seekGestureEdgeInset);
+
 enum _Level { brightness, volume }
 
 class SwipeControls extends StatefulWidget {
@@ -56,7 +62,9 @@ class _SwipeControlsState extends State<SwipeControls> {
 
   int get _seekTarget => (_seekFrom! + _seekOffset).round().clamp(0, _duration);
 
-  void _seekStart(DragStartDetails _) {
+  void _seekStart(DragStartDetails details) {
+    final width = context.size?.width ?? 0;
+    if (seekGestureYieldsToSystem(details.localPosition.dx, width)) return;
     if (!_session.ready || _duration <= 0) return;
     setState(() {
       _seekFrom = _session.player.state.position.inMilliseconds;

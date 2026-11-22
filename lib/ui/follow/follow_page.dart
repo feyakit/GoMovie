@@ -31,10 +31,12 @@ class FollowPage extends StatefulWidget {
     required this.store,
     required this.entryFocus,
     required this.onExitUp,
+    this.embedded = false,
   });
   final LocalStore store;
   final FocusNode entryFocus;
   final VoidCallback onExitUp;
+  final bool embedded;
 
   @override
   State<FollowPage> createState() => _FollowPageState();
@@ -290,22 +292,28 @@ class _FollowPageState extends State<FollowPage> {
           view,
           inset: 16,
           header: [
-            FadeSwitcher(
-              child: selection == null
-                  ? PageHeader(
-                      key: const ValueKey(false),
-                      title: '追剧',
-                      actions: [_editButtonFor(view, icon: false)],
-                    )
-                  : PageHeader(
-                      key: const ValueKey(true),
-                      title: '已选择 ${selection.length} 部',
-                      actions: [
-                        _selectAll(view),
-                        _textButton('完成', _finishEditing),
-                      ],
-                    ),
-            ),
+            if (widget.embedded && selection == null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: _editButtonFor(view, icon: false),
+              )
+            else
+              FadeSwitcher(
+                child: selection == null
+                    ? PageHeader(
+                        key: const ValueKey(false),
+                        title: '追剧',
+                        actions: [_editButtonFor(view, icon: false)],
+                      )
+                    : PageHeader(
+                        key: const ValueKey(true),
+                        title: '已选择 ${selection.length} 部',
+                        actions: [
+                          _selectAll(view),
+                          _textButton('完成', _finishEditing),
+                        ],
+                      ),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: _search(),

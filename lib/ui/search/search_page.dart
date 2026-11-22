@@ -19,7 +19,10 @@ import '../widgets/drama_grid.dart';
 import '../widgets/follow_button.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/motion/motion_widgets.dart';
+import '../widgets/page_header.dart';
 import '../widgets/search_field.dart';
+import '../widgets/search_result_tile.dart';
+import '../widgets/status_banner.dart';
 import '../widgets/status_view.dart';
 
 class SearchPage extends StatefulWidget {
@@ -28,10 +31,14 @@ class SearchPage extends StatefulWidget {
     required this.store,
     required this.source,
     this.query = '',
+    this.aggregate = false,
+    this.embedded = false,
   });
   final LocalStore store;
   final SourceSite source;
   final String query;
+  final bool aggregate;
+  final bool embedded;
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -44,7 +51,14 @@ class _SearchPageState extends State<SearchPage> {
   late SourceCatalog _catalog;
   DramaFeed? _results;
   String _submitted = '';
-  bool _aggregate = false;
+  late bool _aggregate;
+
+  @override
+  void initState() {
+    super.initState();
+    _aggregate = widget.aggregate;
+  }
+
   int _searchGen = 0;
   bool _aggLoading = false;
   int _aggDone = 0;
@@ -58,15 +72,20 @@ class _SearchPageState extends State<SearchPage> {
   final _shownSuggestions = <Object>{};
   bool _ready = false;
 
+  SourceSite get _activeSource {
+    if (!widget.embedded || widget.store.source.isEmpty) return widget.source;
+    return SourceSite.byId(widget.store.source);
+  }
+
   List<SourceSite> get _searchableSources {
     final list = [
       for (final site in widget.store.sources)
         if (site.onlineSearch && site.id != 'quark') site,
     ];
-    if (widget.source.onlineSearch &&
-        widget.source.id != 'quark' &&
-        !list.any((site) => site.id == widget.source.id)) {
-      list.insert(0, widget.source);
+    if (_activeSource.onlineSearch &&
+        _activeSource.id != 'quark' &&
+        !list.any((site) => site.id == _activeSource.id)) {
+      list.insert(0, _activeSource);
     }
     return list;
   }
@@ -77,7 +96,7 @@ class _SearchPageState extends State<SearchPage> {
     if (_ready) return;
     _ready = true;
     _repository = AppScope.of(context).repository;
-    _catalog = SourceCatalog(_repository, widget.source);
+    _catalog = SourceCatalog(_repository, _activeSource);
     if (widget.query.trim().isNotEmpty) _submit(widget.query);
   }
 
@@ -145,10 +164,14 @@ class _SearchPageState extends State<SearchPage> {
   Future<void> _runAggregate(
     String query,
     List<SourceSite> sources,
-    int gen,
-  ) async {
+    int gen, {
+    bool append = false,
+  }) async {
     var cursor = 0;
-    final seen = <String>{};
+    final seen = <String>{
+      if (append)
+        for (final item in _aggItems) '${item.source}:${item.id}',
+    };
     final workerCount = math.min(6, sources.length);
     Future<void> worker() async {
       while (cursor < sources.length) {
@@ -201,13 +224,13 @@ class _SearchPageState extends State<SearchPage> {
     _debounce?.cancel();
     final query = text.trim();
     final generation = ++_suggestion;
-    if (!widget.source.searchSuggestions || query.isEmpty) {
+    if (!_activeSource.searchSuggestions || query.isEmpty) {
       setState(() => _suggestions = const []);
       return;
     }
     _debounce = Timer(const Duration(milliseconds: 250), () async {
       try {
-        final items = await _repository.suggestions(widget.source.id, query);
+        final items = await _repository.suggestions(_activeSource.id, query);
         if (mounted && generation == _suggestion) {
           setState(() => _suggestions = items);
         }
@@ -222,11 +245,14 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_ready && _catalog.source.id != _activeSource.id) {
+      _catalog = SourceCatalog(_repository, _activeSource);
+    }
     final searchable = _searchableSources;
     final canAggregate = searchable.length > 1;
     final hint = _aggregate && canAggregate
         ? '在全网 ${searchable.length} 个站源中聚合搜索'
-        : '在 ${widget.source.name} 中搜索';
+        : '在 ${_activeSource.name} 中搜索';
     final field = SearchField(
       hint: hint,
       controller: _controller,
@@ -235,11 +261,59 @@ class _SearchPageState extends State<SearchPage> {
       onChanged: _changed,
       onSubmitted: _submit,
       letterKeyboard: widget.store.televisionKeyboard,
-      matches: widget.source.searchSuggestions && !_aggregate
-          ? (query) => _repository.suggestions(widget.source.id, query)
+      matches: _activeSource.searchSuggestions && !_aggregate
+          ? (query) => _repository.suggestions(_activeSource.id, query)
           : null,
     );
     final modeBar = canAggregate ? _modeBar(context, searchable.length) : null;
+    if (widget.embedded) {
+      final phone = AppScope.formFactorOf(context) == FormFactor.phone;
+      return Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              const PageHeader(title: '搜索'),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  phone ? 20 : 24,
+                  0,
+                  phone ? 12 : 16,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(child: field),
+                    if (canAggregate)
+                      TextButton(
+                        onPressed: () => _setAggregate(!_aggregate),
+                        child: Text(_aggregate ? '聚合' : '本站'),
+                      ),
+                  ],
+                ),
+              ),
+              if (_aggregate && canAggregate)
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    phone ? 20 : 24,
+                    4,
+                    phone ? 20 : 24,
+                    0,
+                  ),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      '按站源保留结果，同名不合并',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ),
+              Expanded(child: FadeSwitcher(child: _body(context))),
+            ],
+          ),
+        ),
+      );
+    }
     if (AppScope.of(context).television) {
       return Scaffold(
         body: Column(
@@ -397,7 +471,7 @@ class _SearchPageState extends State<SearchPage> {
             if (isChallenge) {
               final ok = await WebViewBridge.verifySource(
                 _repository,
-                widget.source.id,
+                _activeSource.id,
               );
               if (!mounted) return;
               if (ok) {
@@ -576,34 +650,101 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ),
             ),
+          if (_aggErrors.isNotEmpty)
+            SliverToBoxAdapter(child: _aggregateNotices(context, inset)),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              inset,
-              8,
-              inset,
-              television ? 27 : 20,
-            ),
-            sliver: DramaSliverGrid(
-              width: constraints.maxWidth - inset * 2,
-              items: displayed,
-              autofocus: television,
-              subtitleOf: (drama) {
-                final siteName = SourceSite.byId(drama.source).name;
-                if (drama.category.isNotEmpty) {
-                  return '$siteName · ${drama.category}';
-                }
-                if (drama.badge.isNotEmpty) {
-                  return '$siteName · ${drama.badge}';
-                }
-                return siteName;
-              },
-              onOpen: _open,
-              onMore: (drama) => quickFollow(context, widget.store, drama),
-            ),
+            padding: EdgeInsets.fromLTRB(inset, 8, inset, television ? 27 : 20),
+            sliver: AppScope.formFactorOf(context) == FormFactor.phone
+                ? SliverList.separated(
+                    itemCount: displayed.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final drama = displayed[index];
+                      return SearchResultTile(
+                        drama: drama,
+                        onTap: () => _open(drama),
+                      );
+                    },
+                  )
+                : DramaSliverGrid(
+                    width: constraints.maxWidth - inset * 2,
+                    items: displayed,
+                    autofocus: television,
+                    subtitleOf: (drama) {
+                      final siteName = SourceSite.byId(drama.source).name;
+                      if (drama.category.isNotEmpty) {
+                        return '$siteName · ${drama.category}';
+                      }
+                      if (drama.badge.isNotEmpty) {
+                        return '$siteName · ${drama.badge}';
+                      }
+                      return siteName;
+                    },
+                    onOpen: _open,
+                    onMore: (drama) =>
+                        quickFollow(context, widget.store, drama),
+                  ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _aggregateNotices(BuildContext context, double inset) {
+    final failed = _aggErrors.keys.toList();
+    final challenge = failed
+        .where(
+          (id) =>
+              WebViewBridge.supported &&
+              WebViewBridge.isChallengeError(_aggErrors[id] ?? ''),
+        )
+        .toList();
+    final names = [for (final id in failed) SourceSite.byId(id).name].join('、');
+    return Padding(
+      padding: EdgeInsets.fromLTRB(inset, 8, inset, 0),
+      child: Column(
+        spacing: 8,
+        children: [
+          if (challenge.isNotEmpty)
+            StatusBanner(
+              tone: StatusTone.warning,
+              title: '需验证',
+              message:
+                  '${SourceSite.byId(challenge.first).name} 需要完成人机验证后才能继续。不会跳过验证，也不会自动换源循环。',
+              actionLabel: '去验证',
+              onAction: () async {
+                final ok = await WebViewBridge.verifySource(
+                  _repository,
+                  challenge.first,
+                );
+                if (!mounted) return;
+                if (ok) _retrySources([SourceSite.byId(challenge.first)]);
+              },
+            ),
+          StatusBanner(
+            tone: StatusTone.danger,
+            title: '部分失败',
+            message: '$names 暂时无响应。已保留其它站的部分结果。',
+            actionLabel: '重试',
+            onAction: () =>
+                _retrySources([for (final id in failed) SourceSite.byId(id)]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _retrySources(List<SourceSite> sources) {
+    if (sources.isEmpty || _submitted.isEmpty) return;
+    final gen = ++_searchGen;
+    setState(() {
+      for (final site in sources) {
+        _aggErrors.remove(site.id);
+      }
+      _aggLoading = true;
+      _aggTotal = _aggDone + sources.length;
+    });
+    unawaited(_runAggregate(_submitted, sources, gen, append: true));
   }
 
   Widget _recent(BuildContext context) => ListenableBuilder(
@@ -621,7 +762,7 @@ class _SearchPageState extends State<SearchPage> {
         key: const ValueKey('empty'),
         title: _aggregate && total > 1
             ? '在全网 $total 个站源中聚合搜索'
-            : '在 ${widget.source.name} 中搜索',
+            : '在 ${_activeSource.name} 中搜索',
         message: '输入剧名或关键词',
         icon: Icons.search_rounded,
       );

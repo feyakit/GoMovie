@@ -237,13 +237,13 @@ class ExplorePageState extends State<ExplorePage> {
                       ? StatusView(
                           title: '还没有安装站源',
                           message: widget.store.profile.admin
-                              ? '站源以模块的形式提供，请在 我的 › 模块 安装。'
+                              ? '站源以模块的形式提供，请在 管理 › 模块 安装。'
                               : '请联系管理员安装站源模块。',
                           icon: Icons.extension_off_rounded,
                         )
                       : const StatusView(
                           title: '暂无可用站源',
-                          message: '请在 我的 › 模块 中开启站源，或联系管理员开放权限。',
+                          message: '请在 管理 › 模块 中开启站源，或联系管理员开放权限。',
                           icon: Icons.public_off_rounded,
                         ),
                 ),
@@ -299,42 +299,40 @@ class ExplorePageState extends State<ExplorePage> {
           bottom: false,
           child: Column(
             children: [
-              if (!television)
-                SourceBar(
-                  source: source.name,
-                  searchController: _search,
-                  recentSearches: widget.store.recentSearches,
-                  onForgetSearch: (query) => widget.store
-                      .forgetSearch(query)
-                      .catchError((Object _) {}),
-                  onSwitchSource: (anchor) => pickSource(anchor, widget.store),
-                  onOpenSearch: () => openSearch(context, widget.store, source),
-                  onSearchSubmitted: (query) => _searchSubmitted(source, query),
-                  leading: [
-                    if (widget.store.blurCoversButton)
-                      if (CoverBlurScope.of(context) case final blur?)
-                        BarButton(
-                          icon: blur.mode != CoverBlur.off
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          tooltip: blur.mode != CoverBlur.off ? '显示封面' : '模糊封面',
-                          onPressed: blur.onToggle,
-                        ),
-                  ],
-                  actions: [
-                    BarButton(
-                      icon: Icons.link_rounded,
-                      tooltip: '粘贴网盘链接',
-                      onPressed: _openNetdiskShare,
-                    ),
-                    if (desktop)
+              SourceBar(
+                source: source.name,
+                searchController: _search,
+                recentSearches: widget.store.recentSearches,
+                onForgetSearch: (query) =>
+                    widget.store.forgetSearch(query).catchError((Object _) {}),
+                onSwitchSource: (anchor) => pickSource(anchor, widget.store),
+                onOpenSearch: () => openSearch(context, widget.store, source),
+                onSearchSubmitted: (query) => _searchSubmitted(source, query),
+                leading: [
+                  if (widget.store.blurCoversButton)
+                    if (CoverBlurScope.of(context) case final blur?)
                       BarButton(
-                        icon: Icons.refresh_rounded,
-                        tooltip: '刷新',
-                        onPressed: explore.refresh,
+                        icon: blur.mode != CoverBlur.off
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        tooltip: blur.mode != CoverBlur.off ? '显示封面' : '模糊封面',
+                        onPressed: blur.onToggle,
                       ),
-                  ],
-                ),
+                ],
+                actions: [
+                  BarButton(
+                    icon: Icons.link_rounded,
+                    tooltip: '粘贴网盘链接',
+                    onPressed: _openNetdiskShare,
+                  ),
+                  if (desktop)
+                    BarButton(
+                      icon: Icons.refresh_rounded,
+                      tooltip: '刷新',
+                      onPressed: explore.refresh,
+                    ),
+                ],
+              ),
               if (!television || explore.feed!.items.isEmpty) tabs,
               Expanded(
                 child: _swipeTabs(
@@ -417,7 +415,9 @@ class ExplorePageState extends State<ExplorePage> {
         key: const ValueKey('error'),
         title: isChallenge ? '需要完成人机验证' : '暂时无法加载',
         message: feed.error,
-        icon: isChallenge ? Icons.verified_user_outlined : Icons.cloud_off_rounded,
+        icon: isChallenge
+            ? Icons.verified_user_outlined
+            : Icons.cloud_off_rounded,
         action: isChallenge ? '完成人机验证' : '重试',
         onAction: () async {
           if (isChallenge) {

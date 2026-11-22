@@ -104,7 +104,7 @@ class _PosterButtonState extends State<_PosterButton> {
           const SingleActivator(LogicalKeyboardKey.contextMenu): ?widget.onMore,
         },
         child: AnimatedScale(
-          scale: visible && television ? 1.06 : 1,
+          scale: 1,
           duration: const Duration(milliseconds: 120),
           child: button,
         ),

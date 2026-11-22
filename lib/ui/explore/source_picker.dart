@@ -229,9 +229,8 @@ class _SourcePickerState extends State<SourcePicker> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                   child: TextButton.icon(
-                    onPressed: () => Navigator.of(context).pop(
-                      SourcePicker.manageSourceId,
-                    ),
+                    onPressed: () =>
+                        Navigator.of(context).pop(SourcePicker.manageSourceId),
                     icon: const Icon(Icons.tune_rounded, size: 18),
                     label: const Text('管理站源'),
                   ),
@@ -264,9 +263,9 @@ class _SourcePickerState extends State<SourcePicker> {
       if (mounted) setState(() {});
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('设置网络策略失败：$error')),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text('设置网络策略失败：$error')));
     }
   }
 }
@@ -324,10 +323,7 @@ class _SourceChip extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 'jar',
-                style: TextStyle(
-                  fontSize: 9,
-                  color: colors.onSurfaceVariant,
-                ),
+                style: TextStyle(fontSize: 9, color: colors.onSurfaceVariant),
               ),
             ],
             if (netLabel.isNotEmpty) ...[

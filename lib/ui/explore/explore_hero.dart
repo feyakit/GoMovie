@@ -7,9 +7,8 @@ import '../app_scope.dart';
 import '../shell/app_shell.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cover_backdrop.dart';
-import '../widgets/cover_image.dart';
 import '../widgets/drama_grid.dart';
-import '../widgets/focus_ring.dart';
+import '../widgets/play_orb.dart';
 
 const _shade = Color(0xFF161214);
 
@@ -69,8 +68,8 @@ class ExploreHero extends StatelessWidget {
       switch (AppScope.formFactorOf(context)) {
         FormFactor.phone => (
           design: 358,
-          height: 196,
-          radius: 20,
+          height: 228,
+          radius: 22,
           padding: const EdgeInsets.all(16),
           cover: const Size(109, 164),
           coverRadius: 12,
@@ -111,8 +110,8 @@ class ExploreHero extends StatelessWidget {
         ),
         FormFactor.television => (
           design: 844,
-          height: 196,
-          radius: 20,
+          height: 320,
+          radius: 22,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
           cover: const Size(107, 160),
           coverRadius: 12,
@@ -142,7 +141,6 @@ class ExploreHero extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final television = AppScope.of(context).television;
     final muted = Colors.white.withValues(alpha: 0.78);
-    final buttonSize = Size(0, metrics.button);
     final info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 6 * k,
@@ -200,71 +198,12 @@ class ExploreHero extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress.clamp(0.0, 1.0),
               minHeight: 4,
-              color: colors.primaryFixedDim,
+              color: colors.primary,
               backgroundColor: Colors.white.withValues(alpha: 0.25),
               borderRadius: BorderRadius.circular(2),
               stopIndicatorColor: Colors.transparent,
             ),
           ),
-        Expanded(
-          child: Align(
-            alignment: Alignment.bottomLeft,
-            child: Row(
-              spacing: 12 * k,
-              children: [
-                FocusRing(
-                  radius: 999,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: AppTheme.brandGradient,
-                      borderRadius: BorderRadius.circular(999),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: FilledButton.icon(
-                      autofocus: television && ShellForeground.of(context),
-                      onPressed: onPlay,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        minimumSize: buttonSize,
-                        padding: EdgeInsets.fromLTRB(14 * k, 0, 20 * k, 0),
-                        iconSize: 18 * k,
-                        textStyle: TextStyle(
-                          fontSize: metrics.meta,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      icon: const Icon(Icons.play_arrow_rounded),
-                      label: Text(action),
-                    ),
-                  ),
-                ),
-                if (metrics.detail)
-                  FocusRing(
-                    radius: 999,
-                    child: FilledButton(
-                      onPressed: onDetail,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.16),
-                        foregroundColor: Colors.white,
-                        minimumSize: buttonSize,
-                        padding: EdgeInsets.symmetric(horizontal: 20 * k),
-                        textStyle: TextStyle(fontSize: metrics.meta),
-                      ),
-                      child: const Text('详情'),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
     final card = ClipRRect(
@@ -302,39 +241,17 @@ class ExploreHero extends StatelessWidget {
             Padding(
               padding: metrics.padding,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: metrics.gap,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(metrics.coverRadius),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x59000000),
-                          blurRadius: 20,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: SizedBox.fromSize(
-                      size: metrics.cover,
-                      child: DramaCover(
-                        drama: drama,
-                        radius: metrics.coverRadius,
-                        details: false,
-                        exploreBlur: true,
-                      ),
-                    ),
+                  Expanded(child: info),
+                  PlayOrb(
+                    onPressed: onPlay,
+                    autofocus:
+                        AppScope.of(context).television &&
+                        ShellForeground.of(context),
+                    size: metrics.button + 8,
+                    tooltip: action,
                   ),
-                  if (metrics.width case final width?)
-                    Flexible(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: width),
-                        child: info,
-                      ),
-                    )
-                  else
-                    Expanded(child: info),
                 ],
               ),
             ),
@@ -352,10 +269,6 @@ class ExploreHero extends StatelessWidget {
         ),
       ),
     );
-    return Semantics(
-      container: true,
-      label: kicker,
-      child: card,
-    );
+    return Semantics(container: true, label: kicker, child: card);
   }
 }

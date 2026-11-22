@@ -305,7 +305,6 @@ class PlaybackSession extends ChangeNotifier {
     quality: _quality,
     danmaku: _danmakuEnabled,
     videoFit: _videoFit,
-    autoAdvance: true,
     preload: true,
   );
 
@@ -512,9 +511,13 @@ class PlaybackSession extends ChangeNotifier {
         ? position <= Duration.zero
         : position < duration - const Duration(seconds: 2)) {
       _queueRecovery('early_completion');
-    } else if (_foreground && hasNext && !_sleepAtEpisodeEnd) {
+    } else if (_foreground &&
+        store.playbackPreferences.autoAdvance &&
+        hasNext &&
+        !_sleepAtEpisodeEnd) {
       unawaited(play(_index + 1));
     } else if (_foreground &&
+        store.playbackPreferences.autoAdvance &&
         !_sleepAtEpisodeEnd &&
         detail.nextSeason != null) {
       unawaited(_playNextSeason());
@@ -722,8 +725,8 @@ class PlaybackSession extends ChangeNotifier {
     final decoder = store.playbackPreferences.televisionDecoder;
     final hwdec = switch (decoder) {
       TelevisionDecoder.software => 'no',
-      TelevisionDecoder.hardware ||
-      TelevisionDecoder.hardwareSwapUv when Platform.isAndroid =>
+      TelevisionDecoder.hardware || TelevisionDecoder.hardwareSwapUv
+          when Platform.isAndroid =>
         'mediacodec-copy',
       TelevisionDecoder.hardware when Platform.isIOS || Platform.isMacOS =>
         'videotoolbox-copy',
@@ -1478,9 +1481,7 @@ class PlaybackSession extends ChangeNotifier {
     _setVisible(visible);
     final foreground = visible || _backgroundPlayback;
     if (_foreground == foreground) return;
-    DiaryService.add(
-      foreground ? '[Play] 应用回到前台' : '[Play] 应用不可见，暂停播放',
-    );
+    DiaryService.add(foreground ? '[Play] 应用回到前台' : '[Play] 应用不可见，暂停播放');
     _foreground = foreground;
     _health.reset();
     _sync();

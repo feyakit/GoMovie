@@ -26,9 +26,15 @@ typedef _View = ({
 });
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key, required this.store, this.root = false});
+  const HistoryPage({
+    super.key,
+    required this.store,
+    this.root = false,
+    this.embedded = false,
+  });
   final LocalStore store;
   final bool root;
+  final bool embedded;
 
   @override
   State<HistoryPage> createState() => _HistoryPageState();
@@ -353,7 +359,17 @@ class _HistoryPageState extends State<HistoryPage> {
           view,
           inset: 16,
           header: [
-            if (root)
+            if (root && widget.embedded)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: selection == null
+                      ? _browseActions(view, icons: false)
+                      : [_selectAll(view), _textButton('完成', _finishEditing)],
+                ),
+              )
+            else if (root)
               FadeSwitcher(
                 child: selection == null
                     ? PageHeader(

@@ -495,8 +495,8 @@ class _DetailPageState extends State<DetailPage> {
       final form = AppScope.formFactorOf(context);
       if (_coverPath.isEmpty) unawaited(_loadCover());
       if (form == FormFactor.television) return _televisionPage(details);
-      final page = (form == FormFactor.phone ||
-              MediaQuery.sizeOf(context).width < 840)
+      final page =
+          (form == FormFactor.phone || MediaQuery.sizeOf(context).width < 840)
           ? _phonePage(details)
           : _widePage(details, desktop: form == FormFactor.window);
       return AccentStage(accent: _accent, cover: _coverPath, child: page);
@@ -644,6 +644,13 @@ class _DetailPageState extends State<DetailPage> {
                           child: _episodeHeader(details, m, scope: scope),
                         ),
                       ),
+                      if (scope.routes.length > 1)
+                        SliverToBoxAdapter(
+                          child: const Padding(
+                            padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
+                            child: Text('线路集数不一致时不会自动跳集，请点选要播放的集。'),
+                          ),
+                        ),
                       if (scope.routes.length > 1)
                         SliverToBoxAdapter(
                           child: SizedBox(
@@ -1332,11 +1339,7 @@ class _DetailPageState extends State<DetailPage> {
       final route = episode.title.substring(0, sep).trim();
       final label = episode.title.substring(sep + 3).trim();
       if (route.isEmpty) return const [];
-      (grouped[route] ??= []).add((
-        episode: episode,
-        index: i,
-        label: label,
-      ));
+      (grouped[route] ??= []).add((episode: episode, index: i, label: label));
     }
     if (grouped.length < 2) return const [];
     return [

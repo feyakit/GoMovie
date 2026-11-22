@@ -18,6 +18,7 @@ import 'theme/app_theme.dart';
 import 'theme/motion.dart';
 import 'theme/system_color.dart';
 import 'users/unlock_page.dart';
+import 'widgets/brand_mark.dart';
 import 'widgets/focus_ring.dart';
 
 class GoMovieApp extends StatefulWidget {
@@ -243,9 +244,9 @@ class _GoMovieAppState extends State<GoMovieApp> with WidgetsBindingObserver {
           : CoverBlur.off;
     }
     final coverBlur = _coverBlur ?? CoverBlur.off;
-    final systemColor = (store?.followSystemColor ?? false)
-        ? _systemColor
-        : null;
+    final systemColor = television || !(store?.followSystemColor ?? false)
+        ? null
+        : _systemColor;
     final seed =
         systemColor ?? Color((store?.themeColor ?? ThemeColor.crimson).seed);
     final pureBlack = store?.pureBlack ?? false;
@@ -276,7 +277,9 @@ class _GoMovieAppState extends State<GoMovieApp> with WidgetsBindingObserver {
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: _themes.$1,
       darkTheme: _themes.$2,
-      themeMode: AppTheme.mode(store?.themeMode ?? 'dark'),
+      themeMode: television
+          ? ThemeMode.dark
+          : AppTheme.mode(store?.themeMode ?? 'dark'),
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
         value: AppTheme.systemBars(Theme.of(context).brightness),
         child: Focus(
@@ -360,14 +363,21 @@ class _BootScreen extends StatelessWidget {
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          spacing: 24,
+          spacing: 20,
           children: [
-            if (error == null) const CircularProgressIndicator(),
+            const BrandMark(size: 88),
             Text(
-              error ?? '正在打开$appName',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
+              appName,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
             ),
+            if (error != null)
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
             if (error != null && onRetry != null)
               FilledButton(onPressed: onRetry, child: const Text('重新打开')),
           ],

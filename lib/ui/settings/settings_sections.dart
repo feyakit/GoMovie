@@ -99,15 +99,9 @@ class SettingsSection extends StatelessWidget {
                 ..._playback(context),
                 ..._danmaku(context),
               ],
-              SettingsGroup.download => [
-                ..._download(context),
-                ..._storage(),
-              ],
+              SettingsGroup.download => [..._download(context), ..._storage()],
               SettingsGroup.proxy => _proxy(context),
-              SettingsGroup.about => [
-                ..._about(context),
-                ..._diagnostics(),
-              ],
+              SettingsGroup.about => [..._about(context), ..._diagnostics()],
               _ => const [],
             },
           ),
@@ -206,6 +200,13 @@ class SettingsSection extends StatelessWidget {
           ),
           if (Platform.isAndroid) const _RenderingTile(),
           SwitchTile(
+            title: '播完自动下一集',
+            subtitle: '关闭后停在当前集。换季同样遵守这个开关。',
+            value: preferences.autoAdvance,
+            onChanged: (value) =>
+                savePreferences(preferences.copyWith(autoAdvance: value)),
+          ),
+          SwitchTile(
             title: '预开下一集',
             subtitle: '提前打开下一集的播放器，切集无需等待',
             value: preferences.preopens(television: television),
@@ -230,7 +231,7 @@ class SettingsSection extends StatelessWidget {
           children: [
             SwitchTile(
               title: '双击快退/快进',
-              subtitle: '左侧双击快退，右侧双击快进，关闭时均为暂停',
+              subtitle: '左右各四分之一双击快退或快进 10 秒，中间双击只切换播放。关闭后双击一律切换播放。全应用这一条规则。',
               value: preferences.doubleTapSeek,
               onChanged: (value) =>
                   savePreferences(preferences.copyWith(doubleTapSeek: value)),

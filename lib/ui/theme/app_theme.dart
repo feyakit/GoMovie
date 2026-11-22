@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../theme_color.dart';
 import 'motion.dart';
+import 'palette.dart';
 import 'tokens.dart';
 
 abstract final class AppTheme {
-  static const crimson = Color(0xFFFF2E54);
-  static const gold = Color(0xFFFF9E2C);
-  static const brandGradient = LinearGradient(
-    colors: [crimson, gold],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
+  static const crimson = GoPalette.brand;
+  static const gold = GoPalette.amber;
+  static const brandGradient = GoPalette.brandGradient;
 
   /// 品牌渐变必须跟着当前主题色走，否则换主题色后图标/角标还是红金。
   static LinearGradient gradientFor(ColorScheme scheme) => LinearGradient(
-    colors: [scheme.primary, Color.lerp(scheme.primary, scheme.tertiary, 0.65)!],
+    colors: [
+      scheme.primary,
+      Color.lerp(scheme.primary, scheme.tertiary, 0.65)!,
+    ],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
@@ -48,40 +49,16 @@ abstract final class AppTheme {
     required bool television,
     bool pureBlack = false,
   }) {
-    final seeded = ColorScheme.fromSeed(
-      seedColor: seed,
-      brightness: brightness,
-    );
-    final scheme = switch ((brightness, pureBlack, seed.toARGB32())) {
-      (Brightness.dark, true, _) => seeded.copyWith(
-        surface: Colors.black,
-        surfaceDim: Colors.black,
-        surfaceContainerLowest: Colors.black,
-        surfaceContainerLow: const Color(0xFF0B0B0B),
-        surfaceContainer: const Color(0xFF121212),
-        surfaceContainerHigh: const Color(0xFF1A1A1A),
-        surfaceContainerHighest: const Color(0xFF242424),
-      ),
-      (Brightness.dark, false, 0xFFFF2E54) => seeded.copyWith(
-        primary: const Color(0xFFFF2E54),
-        onPrimary: Colors.white,
-        tertiary: const Color(0xFFFF9E2C),
-        onTertiary: const Color(0xFF1A0E00),
-        surface: const Color(0xFF0A0A0C),
-        surfaceDim: const Color(0xFF070709),
-        surfaceContainerLowest: const Color(0xFF0A0A0C),
-        surfaceContainerLow: const Color(0xFF121216),
-        surfaceContainer: const Color(0xFF16161B),
-        surfaceContainerHigh: const Color(0xFF1E1E24),
-        surfaceContainerHighest: const Color(0xFF27272F),
-        outlineVariant: const Color(0xFF2B2B33),
-      ),
-      _ => seeded,
-    };
+    final scheme = _scheme(seed, brightness, pureBlack: pureBlack);
+    final goColors = brightness == Brightness.dark
+        ? GoColors.dark
+        : GoColors.light;
     final theme = ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      extensions: [goColors],
       scaffoldBackgroundColor: scheme.surface,
+      textTheme: _type(scheme, television: television),
       pageTransitionsTheme: pageTransitions(television: television),
       appBarTheme: AppBarTheme(
         backgroundColor: scheme.surface,
@@ -111,9 +88,7 @@ abstract final class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -127,10 +102,18 @@ abstract final class AppTheme {
       ),
       // ---- 以下为「所有控件统一品牌风格」：规格来自 tokens.dart，页面里不要再写死 ----
       filledButtonTheme: FilledButtonThemeData(
-        style: _filled(scheme, background: scheme.primary, foreground: scheme.onPrimary),
+        style: _filled(
+          scheme,
+          background: scheme.primary,
+          foreground: scheme.onPrimary,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: _filled(scheme, background: scheme.primary, foreground: scheme.onPrimary),
+        style: _filled(
+          scheme,
+          background: scheme.primary,
+          foreground: scheme.onPrimary,
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(style: _outlined(scheme)),
       textButtonTheme: TextButtonThemeData(style: _text(scheme)),
@@ -140,7 +123,9 @@ abstract final class AppTheme {
             Size(Sizes.button, Sizes.button),
           ),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.sm),
+            ),
           ),
           overlayColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed)
@@ -189,7 +174,9 @@ abstract final class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
-          borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.45)),
+          borderSide: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
@@ -209,7 +196,9 @@ abstract final class AppTheme {
           fontSize: TypeScale.label,
           color: scheme.onSurfaceVariant,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.sm),
+        ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
@@ -236,14 +225,20 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(Radii.md),
           side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
         ),
-        textStyle: TextStyle(fontSize: TypeScale.title, color: scheme.onSurface),
+        textStyle: TextStyle(
+          fontSize: TypeScale.title,
+          color: scheme.onSurface,
+        ),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(Radii.xs),
         ),
-        textStyle: TextStyle(fontSize: TypeScale.label, color: scheme.onSurface),
+        textStyle: TextStyle(
+          fontSize: TypeScale.label,
+          color: scheme.onSurface,
+        ),
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: scheme.onSurface,
@@ -251,8 +246,14 @@ abstract final class AppTheme {
         indicatorColor: scheme.primary,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
-        labelStyle: TextStyle(fontSize: TypeScale.title, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: TypeScale.title, fontWeight: FontWeight.w500),
+        labelStyle: TextStyle(
+          fontSize: TypeScale.title,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: TypeScale.title,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
@@ -261,7 +262,9 @@ abstract final class AppTheme {
             TextStyle(fontSize: TypeScale.body, fontWeight: FontWeight.w600),
           ),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.pill)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.pill),
+            ),
           ),
         ),
       ),
@@ -273,7 +276,9 @@ abstract final class AppTheme {
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Radii.md),
-              side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.45)),
+              side: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
             ),
           ),
         ),
@@ -326,6 +331,127 @@ abstract final class AppTheme {
     return television ? _television(titled) : titled;
   }
 
+  static bool _brandSeed(Color seed) {
+    final value = seed.toARGB32();
+    return value == ThemeColor.crimson.seed ||
+        value == 0xFFFF2E54 ||
+        value == GoPalette.brand.toARGB32();
+  }
+
+  static ColorScheme _scheme(
+    Color seed,
+    Brightness brightness, {
+    required bool pureBlack,
+  }) {
+    final brand = _brandSeed(seed);
+    final primary = brand ? GoPalette.brand : seed;
+    final seeded = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: brightness,
+    );
+    if (brightness == Brightness.dark) {
+      return seeded.copyWith(
+        primary: primary,
+        onPrimary: Colors.white,
+        tertiary: GoPalette.amber,
+        onTertiary: const Color(0xFF2A1C06),
+        tertiaryContainer: const Color(0xFF3A2E1C),
+        onTertiaryContainer: const Color(0xFFFFE3B8),
+        error: const Color(0xFFFFB4AB),
+        onError: const Color(0xFF690005),
+        errorContainer: GoPalette.danger,
+        onErrorContainer: GoPalette.dangerInk,
+        surface: pureBlack ? Colors.black : GoPalette.canvas,
+        onSurface: GoPalette.ink,
+        onSurfaceVariant: GoPalette.muted,
+        outline: const Color(0xFF3A3B44),
+        outlineVariant: GoPalette.line,
+        surfaceTint: primary,
+        surfaceDim: pureBlack ? Colors.black : const Color(0xFF090A0D),
+        surfaceBright: const Color(0xFF2C2D34),
+        surfaceContainerLowest: pureBlack
+            ? Colors.black
+            : const Color(0xFF090A0D),
+        surfaceContainerLow: pureBlack
+            ? const Color(0xFF0B0B0B)
+            : const Color(0xFF121318),
+        surfaceContainer: pureBlack
+            ? const Color(0xFF121212)
+            : GoPalette.surface,
+        surfaceContainerHigh: pureBlack
+            ? const Color(0xFF1A1A1A)
+            : const Color(0xFF1E1F25),
+        surfaceContainerHighest: pureBlack
+            ? const Color(0xFF242424)
+            : GoPalette.raised,
+      );
+    }
+    return seeded.copyWith(
+      primary: primary,
+      onPrimary: Colors.white,
+      tertiary: GoPalette.amber,
+      onTertiary: const Color(0xFF2A1C06),
+      error: GoPalette.lightDanger,
+      onError: Colors.white,
+      errorContainer: const Color(0xFFFFDAD6),
+      onErrorContainer: GoPalette.lightDanger,
+      surface: GoPalette.paper,
+      onSurface: GoPalette.paperInk,
+      onSurfaceVariant: GoPalette.paperMuted,
+      outline: const Color(0xFFD5CFC4),
+      outlineVariant: const Color(0xFFE4DDD2),
+      surfaceTint: primary,
+      surfaceDim: const Color(0xFFE7E1D6),
+      surfaceBright: GoPalette.paperSurface,
+      surfaceContainerLowest: const Color(0xFFFFFCF8),
+      surfaceContainerLow: GoPalette.paperSurface,
+      surfaceContainer: const Color(0xFFF3EEE6),
+      surfaceContainerHigh: const Color(0xFFEDE7DD),
+      surfaceContainerHighest: GoPalette.paperRaised,
+    );
+  }
+
+  static TextTheme _type(ColorScheme scheme, {required bool television}) {
+    TextStyle style(
+      double size,
+      FontWeight weight, {
+      Color? color,
+      double height = 1.35,
+    }) => TextStyle(
+      fontSize: television ? size + 4 : size,
+      fontWeight: weight,
+      color: color ?? scheme.onSurface,
+      height: height,
+      letterSpacing: 0,
+    );
+    return TextTheme(
+      displaySmall: style(TypeScale.display, FontWeight.w800, height: 1.15),
+      headlineMedium: style(TypeScale.heading, FontWeight.w800, height: 1.2),
+      headlineSmall: style(TypeScale.heading, FontWeight.w700, height: 1.25),
+      titleLarge: style(20, FontWeight.w700),
+      titleMedium: style(TypeScale.title, FontWeight.w700),
+      titleSmall: style(TypeScale.body, FontWeight.w600),
+      bodyLarge: style(TypeScale.title, FontWeight.w500, height: 1.45),
+      bodyMedium: style(TypeScale.body, FontWeight.w400, height: 1.45),
+      bodySmall: style(
+        TypeScale.label,
+        FontWeight.w400,
+        color: scheme.onSurfaceVariant,
+      ),
+      labelLarge: style(TypeScale.body, FontWeight.w600),
+      labelMedium: style(
+        TypeScale.label,
+        FontWeight.w500,
+        color: scheme.onSurfaceVariant,
+      ),
+      labelSmall: style(
+        TypeScale.caption,
+        FontWeight.w500,
+        color: scheme.onSurfaceVariant,
+      ),
+    );
+  }
+
   static ButtonStyle _filled(
     ColorScheme scheme, {
     required Color background,
@@ -340,7 +466,9 @@ abstract final class AppTheme {
       fontWeight: FontWeight.w700,
     ),
     elevation: 0,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.md),
+    ),
   );
 
   static ButtonStyle _outlined(ColorScheme scheme) => OutlinedButton.styleFrom(
@@ -352,7 +480,9 @@ abstract final class AppTheme {
       fontSize: TypeScale.title,
       fontWeight: FontWeight.w600,
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.md),
+    ),
   );
 
   static ButtonStyle _text(ColorScheme scheme) => TextButton.styleFrom(
@@ -363,7 +493,9 @@ abstract final class AppTheme {
       fontSize: TypeScale.title,
       fontWeight: FontWeight.w600,
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.sm),
+    ),
   );
 
   static ThemeData _television(ThemeData theme) {

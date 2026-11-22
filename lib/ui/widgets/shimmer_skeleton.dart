@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
-import '../shell/app_shell.dart';
 
 class ShimmerBox extends StatefulWidget {
-  const ShimmerBox({
-    super.key,
-    this.width,
-    this.height,
-    this.radius = 12,
-  });
+  const ShimmerBox({super.key, this.width, this.height, this.radius = 12});
 
   final double? width;
   final double? height;

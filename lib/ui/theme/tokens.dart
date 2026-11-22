@@ -41,16 +41,16 @@ abstract final class Motion {
 
 /// 字号只有 6 档，页面里不要再出现其它数值。
 abstract final class TypeScale {
-  static const caption = 11.0;
-  static const label = 12.0;
-  static const body = 13.0;
-  static const title = 15.0;
-  static const heading = 17.0;
-  static const display = 22.0;
+  static const caption = 12.0;
+  static const label = 13.0;
+  static const body = 15.0;
+  static const title = 17.0;
+  static const heading = 22.0;
+  static const display = 28.0;
 }
 
 abstract final class Insets {
-  static const page = 16.0;
-  static const gap = 10.0;
-  static const section = 22.0;
+  static const page = 20.0;
+  static const gap = 12.0;
+  static const section = 24.0;
 }
