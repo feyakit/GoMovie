@@ -519,7 +519,9 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         ),
         FadePresence(
           duration: Motion.medium,
-          child: session.loading ? PlaybackLoading(session: session) : null,
+          child: (session.loading || (!session.ready && session.error == null))
+              ? PlaybackLoading(session: session)
+              : null,
         ),
         FadePresence(
           duration: Motion.medium,

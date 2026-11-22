@@ -14,6 +14,7 @@ import '../netdisk/netdisk_page.dart';
 import '../settings/sorani_account_view.dart';
 import '../theme/motion.dart';
 import '../widgets/contained_slider.dart';
+import '../widgets/cover_backdrop.dart';
 import '../widgets/motion/motion_widgets.dart';
 import 'cast_page.dart';
 import 'danmaku_overlay.dart';
@@ -1165,22 +1166,44 @@ class PlaybackLoading extends StatelessWidget {
   final PlaybackSession session;
 
   @override
-  Widget build(BuildContext context) => ColoredBox(
-    color: Colors.black.withValues(alpha: .78),
-    child: Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(
-            session.loadingMessage,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+  Widget build(BuildContext context) {
+    final message = session.loadingMessage.isNotEmpty
+        ? session.loadingMessage
+        : '正在缓冲视频…';
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ColoredBox(color: Colors.black.withValues(alpha: .88)),
+        CoverBackdrop(
+          drama: session.detail.drama,
+          sigma: 28,
+          opacity: 0.55,
+          overlay: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.45),
+            ),
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+        Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class PlaybackFailure extends StatelessWidget {
