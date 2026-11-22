@@ -13,6 +13,7 @@ import '../widgets/motion/motion_widgets.dart';
 import 'danmaku_overlay.dart';
 import 'fade_presence.dart';
 import 'playback_handle.dart';
+import 'player_overlays.dart';
 import 'player_status.dart';
 import 'player_surface.dart';
 import 'player_video.dart';
@@ -462,7 +463,17 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
                     ),
                     FadePresence(
                       child: !_visible && _seekShown
-                          ? const _Shade(top: false)
+                          ? const IgnorePointer(
+                              child: Align(
+                                alignment: Alignment.bottomCenter,
+                                child: PlayerShade(
+                                  height: 190,
+                                  top: false,
+                                  topAlpha: 0xA6,
+                                  bottomAlpha: 0xB3,
+                                ),
+                              ),
+                            )
                           : null,
                     ),
                     FadePresence(
@@ -504,8 +515,28 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
     return Stack(
       fit: StackFit.expand,
       children: [
-        const _Shade(top: true),
-        const _Shade(top: false),
+        const IgnorePointer(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: PlayerShade(
+              height: 130,
+              top: true,
+              topAlpha: 0xA6,
+              bottomAlpha: 0xB3,
+            ),
+          ),
+        ),
+        const IgnorePointer(
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: PlayerShade(
+              height: 190,
+              top: false,
+              topAlpha: 0xA6,
+              bottomAlpha: 0xB3,
+            ),
+          ),
+        ),
         Positioned(
           left: televisionInset,
           right: televisionInset,
@@ -1065,33 +1096,6 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         child: Text(
           warning,
           style: const TextStyle(color: Colors.white, fontSize: 16),
-        ),
-      ),
-    ),
-  );
-}
-
-class _Shade extends StatelessWidget {
-  const _Shade({required this.top});
-  final bool top;
-
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-    child: Align(
-      alignment: top ? Alignment.topCenter : Alignment.bottomCenter,
-      child: SizedBox(
-        width: double.infinity,
-        height: top ? 130 : 190,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: top
-                  ? const [Color(0xA6000000), Color(0x00000000)]
-                  : const [Color(0x00000000), Color(0xB3000000)],
-            ),
-          ),
         ),
       ),
     ),

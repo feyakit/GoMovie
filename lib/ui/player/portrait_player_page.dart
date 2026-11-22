@@ -23,6 +23,7 @@ import 'mini_player.dart';
 import 'playback_sheets.dart';
 import 'playback_handle.dart';
 import 'player_lock.dart';
+import 'player_overlays.dart';
 import 'player_surface.dart';
 import 'player_video.dart';
 import 'swipe_controls.dart';
@@ -678,7 +679,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           const IgnorePointer(
             child: Align(
               alignment: Alignment.topCenter,
-              child: _Shade(height: 130, top: true),
+              child: PlayerShade(height: 130, top: true),
             ),
           ),
         ),
@@ -686,7 +687,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           const IgnorePointer(
             child: Align(
               alignment: Alignment.bottomCenter,
-              child: _Shade(height: 220, top: false),
+              child: PlayerShade(height: 220, top: false),
             ),
           ),
         ),
@@ -813,7 +814,13 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           top: padding.top + 76,
           child: FadePresence(
             child: _holding
-                ? IgnorePointer(child: Center(child: _boostBadge()))
+                ? IgnorePointer(
+                    child: Center(
+                      child: PlayerBoostBadge(
+                        label: session.store.playbackPreferences.boostLabel,
+                      ),
+                    ),
+                  )
                 : null,
           ),
         ),
@@ -1133,30 +1140,6 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
       ),
     );
   }
-
-  Widget _boostBadge() => Container(
-    height: 32,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color: Colors.black.withValues(alpha: .5),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        const Icon(Icons.fast_forward_rounded, size: 16, color: Colors.white),
-        Text(
-          '${_session.store.playbackPreferences.boostLabel}播放中',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _PagePhysics extends BouncingScrollPhysics {
@@ -1169,30 +1152,6 @@ class _PagePhysics extends BouncingScrollPhysics {
   @override
   SpringDescription get spring =>
       SpringDescription.withDampingRatio(mass: .5, stiffness: 400, ratio: 1);
-}
-
-class _Shade extends StatelessWidget {
-  const _Shade({required this.height, required this.top});
-  final double height;
-  final bool top;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: double.infinity,
-    height: height,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: top ? Alignment.topCenter : Alignment.bottomCenter,
-          end: top ? Alignment.bottomCenter : Alignment.topCenter,
-          colors: [
-            Color(top ? 0x8C000000 : 0xA6000000),
-            const Color(0x00000000),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 class _EpisodeSheet extends StatefulWidget {

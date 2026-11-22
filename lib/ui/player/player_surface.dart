@@ -21,6 +21,7 @@ import 'fade_presence.dart';
 import 'playback_handle.dart';
 import 'playback_sheets.dart';
 import 'player_lock.dart';
+import 'player_overlays.dart';
 import 'player_status.dart';
 import 'player_video.dart';
 import 'swipe_controls.dart';
@@ -407,7 +408,7 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
             _pausedMark(_session.ready && _session.paused),
             FadePresence(
               scaleFrom: .9,
-              child: _streak != 0 ? _streakBadge() : null,
+              child: _streak != 0 ? PlayerStreakBadge(streak: _streak) : null,
             ),
             IgnorePointer(
               ignoring: !visible,
@@ -522,44 +523,6 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
       ),
     ),
   );
-
-  Widget _streakBadge() {
-    final forward = _streak > 0;
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment(forward ? .75 : -.75, 0),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: .5),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 6,
-            children: [
-              Icon(
-                forward
-                    ? Icons.fast_forward_rounded
-                    : Icons.fast_rewind_rounded,
-                size: 20,
-                color: Colors.white,
-              ),
-              Text(
-                '${forward ? '快进' : '快退'} ${_streak.abs() * 10} 秒',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _controls(BuildContext context) {
     final state = _session.player.state;

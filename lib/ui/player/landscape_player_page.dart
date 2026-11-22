@@ -25,6 +25,7 @@ import 'mini_player.dart';
 import 'playback_handle.dart';
 import 'playback_sheets.dart';
 import 'player_lock.dart';
+import 'player_overlays.dart';
 import 'player_status.dart';
 import 'fade_presence.dart';
 import 'player_surface.dart';
@@ -529,7 +530,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         ),
         FadePresence(
           scaleFrom: .9,
-          child: _streak != 0 ? _streakBadge(full) : null,
+          child: _streak != 0 ? PlayerStreakBadge(streak: _streak) : null,
         ),
         IgnorePointer(
           ignoring: !visible,
@@ -556,7 +557,13 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
           top: full ? 24 : 12,
           child: FadePresence(
             child: session.boosting
-                ? IgnorePointer(child: Center(child: _boostBadge()))
+                ? IgnorePointer(
+                    child: Center(
+                      child: PlayerBoostBadge(
+                        label: session.store.playbackPreferences.boostLabel,
+                      ),
+                    ),
+                  )
                 : null,
           ),
         ),
@@ -666,13 +673,13 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         const IgnorePointer(
           child: Align(
             alignment: Alignment.topCenter,
-            child: _Shade(height: 64, top: true),
+            child: PlayerShade(height: 64, top: true),
           ),
         ),
         const IgnorePointer(
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: _Shade(height: 96, top: false),
+            child: PlayerShade(height: 96, top: false),
           ),
         ),
         Positioned(
@@ -750,13 +757,13 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         const IgnorePointer(
           child: Align(
             alignment: Alignment.topCenter,
-            child: _Shade(height: 110, top: true),
+            child: PlayerShade(height: 110, top: true),
           ),
         ),
         const IgnorePointer(
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: _Shade(height: 150, top: false),
+            child: PlayerShade(height: 150, top: false),
           ),
         ),
         if (!desktopPlatform)
@@ -1098,68 +1105,6 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         backgroundColor: Colors.white.withValues(alpha: .2),
       );
     },
-  );
-
-  Widget _streakBadge(bool full) {
-    final forward = _streak > 0;
-    return IgnorePointer(
-      child: Align(
-        alignment: Alignment(forward ? .75 : -.75, 0),
-        child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: .5),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 6,
-            children: [
-              Icon(
-                forward
-                    ? Icons.fast_forward_rounded
-                    : Icons.fast_rewind_rounded,
-                size: 20,
-                color: Colors.white,
-              ),
-              Text(
-                '${forward ? '快进' : '快退'} ${_streak.abs() * 10} 秒',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _boostBadge() => Container(
-    height: 32,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(
-      color: Colors.black.withValues(alpha: .5),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      spacing: 6,
-      children: [
-        const Icon(Icons.fast_forward_rounded, size: 16, color: Colors.white),
-        Text(
-          '${_session.store.playbackPreferences.boostLabel}播放中',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ),
   );
 
   Widget _batteryMark(({int level, bool charging}) battery) {
@@ -1619,24 +1564,3 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
 }
 
 String _two(int value) => value.toString().padLeft(2, '0');
-
-class _Shade extends StatelessWidget {
-  const _Shade({required this.height, required this.top});
-  final double height;
-  final bool top;
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: double.infinity,
-    height: height,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: top ? Alignment.topCenter : Alignment.bottomCenter,
-          end: top ? Alignment.bottomCenter : Alignment.topCenter,
-          colors: const [Color(0x99000000), Color(0x00000000)],
-        ),
-      ),
-    ),
-  );
-}
