@@ -21,6 +21,8 @@ import 'episode_grid.dart';
 import 'fade_presence.dart';
 import 'mini_player.dart';
 import 'playback_sheets.dart';
+import 'player_dock.dart';
+import 'route_sheet.dart';
 import 'playback_handle.dart';
 import 'player_lock.dart';
 import 'player_surface.dart';
@@ -28,9 +30,6 @@ import 'player_video.dart';
 import 'swipe_controls.dart';
 
 const _maskHeight = 68.0;
-
-String _status(Drama drama) =>
-    drama.releaseLabel == '状态未知' ? '' : '${drama.releaseLabel} · ';
 
 class PortraitPlayerPage extends StatefulWidget {
   const PortraitPlayerPage({
@@ -740,12 +739,23 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           child: _chrome(_progress(context)),
         ),
         Positioned(
-          key: const ValueKey('episodes'),
+          key: const ValueKey('player-dock'),
           left: 16,
           right: widget.onFullscreen == null ? 16 : 68,
-          bottom: bottom + 16,
-          height: 44,
-          child: _chrome(_episodeStrip()),
+          bottom: bottom + 12,
+          height: 48,
+          child: _chrome(
+            PlayerDock(
+              speedLabel: '${session.speed}x',
+              danmakuSupported: session.danmakuSupported,
+              danmakuEnabled: session.danmakuEnabled,
+              onLock: _lock,
+              onDanmaku: () => unawaited(session.toggleDanmaku()),
+              onRoutes: () => unawaited(showRouteSheet(context, session)),
+              onEpisodes: () => unawaited(_openEpisodes()),
+              onSpeed: () => unawaited(_openSettings()),
+            ),
+          ),
         ),
         if (widget.onFullscreen case final onFullscreen?)
           Positioned(
@@ -1043,57 +1053,6 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
               setState(_endSeek);
             }
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _episodeStrip() {
-    final drama = _session.detail.drama;
-    final count = _session.detail.episodes.length;
-    final status = _status(drama);
-    return Material(
-      color: Colors.white.withValues(alpha: .14),
-      borderRadius: BorderRadius.circular(12),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: _openEpisodes,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 0, 12, 0),
-          child: Row(
-            spacing: 8,
-            children: [
-              const Icon(
-                Icons.view_list_rounded,
-                size: 18,
-                color: Colors.white,
-              ),
-              const Text(
-                '选集',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  '· $status共 $count 集',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: .72),
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.keyboard_arrow_up_rounded,
-                size: 20,
-                color: Colors.white,
-              ),
-            ],
-          ),
         ),
       ),
     );

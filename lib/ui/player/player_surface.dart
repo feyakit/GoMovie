@@ -20,6 +20,7 @@ import 'danmaku_overlay.dart';
 import 'fade_presence.dart';
 import 'playback_handle.dart';
 import 'playback_sheets.dart';
+import 'route_sheet.dart';
 import 'player_lock.dart';
 import 'player_status.dart';
 import 'player_video.dart';
@@ -784,6 +785,7 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
             color: _session.danmakuEnabled ? colors.primary : null,
           ),
         ],
+        _text('换源', '换源', () => unawaited(showRouteSheet(context, _session))),
         const Spacer(),
         if (showQuality)
           _popupTarget(

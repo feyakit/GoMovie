@@ -16,6 +16,7 @@ import 'playback_handle.dart';
 import 'player_status.dart';
 import 'player_surface.dart';
 import 'player_video.dart';
+import 'television_commands.dart';
 import 'television_episode_panel.dart';
 
 enum _Menu { speed, quality, fit }
@@ -474,16 +475,37 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         _step(-10);
         return KeyEventResult.handled;
     }
-    if (_panel) {
-      if (_confirms.contains(key)) {
+    final command = televisionPlayerCommand(
+      key: key,
+      panelOpen: _panel,
+      controlsVisible: _visible || _menu != null,
+      failed: false,
+    );
+    switch (command) {
+      case TelevisionPlayerCommand.confirmPanel:
         if (down) _confirmPanel();
         return KeyEventResult.handled;
-      }
-      if (_arrows.contains(key)) {
+      case TelevisionPlayerCommand.movePanel:
         if (down) _movePanel(key);
         return KeyEventResult.handled;
-      }
-      return KeyEventResult.ignored;
+      case TelevisionPlayerCommand.seekBack:
+        _step(-10);
+        return KeyEventResult.handled;
+      case TelevisionPlayerCommand.seekForward:
+        _step(10);
+        return KeyEventResult.handled;
+      case TelevisionPlayerCommand.showProgress:
+        if (down) _revealProgress();
+        return KeyEventResult.handled;
+      case TelevisionPlayerCommand.openPanel:
+        if (down) _openPanel();
+        return KeyEventResult.handled;
+      case TelevisionPlayerCommand.togglePlay:
+        if (down) _session.togglePlayback();
+        return KeyEventResult.handled;
+      case TelevisionPlayerCommand.closePanel:
+      case TelevisionPlayerCommand.ignored:
+        break;
     }
     if (_menu case final menu?) return _menuKey(menu, key);
     final horizontal = key == LogicalKeyboardKey.arrowLeft
@@ -492,22 +514,6 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
         ? 1
         : 0;
     if (!_visible) {
-      if (horizontal != 0) {
-        _step(horizontal * 10);
-        return KeyEventResult.handled;
-      }
-      if (key == LogicalKeyboardKey.arrowUp) {
-        if (down) _revealProgress();
-        return KeyEventResult.handled;
-      }
-      if (key == LogicalKeyboardKey.arrowDown) {
-        if (down) _openPanel();
-        return KeyEventResult.handled;
-      }
-      if (_confirms.contains(key)) {
-        if (down) _session.togglePlayback();
-        return KeyEventResult.handled;
-      }
       return KeyEventResult.ignored;
     }
     _scheduleHide();

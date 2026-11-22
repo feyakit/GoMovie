@@ -24,7 +24,9 @@ import 'episode_grid.dart';
 import 'mini_player.dart';
 import 'playback_handle.dart';
 import 'playback_sheets.dart';
+import 'player_dock.dart';
 import 'player_lock.dart';
+import 'route_sheet.dart';
 import 'player_status.dart';
 import 'fade_presence.dart';
 import 'player_surface.dart';
@@ -851,6 +853,24 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
                 () => _openPanel(_Panel.settings),
               ),
             ],
+          ),
+        ),
+        Positioned(
+          left: left + 8,
+          right: right + 8,
+          bottom: 112,
+          height: 48,
+          child: PlayerDock(
+            speedLabel: '${session.speed}x',
+            danmakuSupported: session.danmakuSupported,
+            danmakuEnabled: session.danmakuEnabled,
+            onLock: _lock,
+            onDanmaku: session.danmakuSupported
+                ? () => _change(session.toggleDanmaku)
+                : null,
+            onRoutes: () => unawaited(showRouteSheet(context, session)),
+            onEpisodes: () => _openPanel(_Panel.episodes),
+            onSpeed: ready ? () => _openPanel(_Panel.speed) : null,
           ),
         ),
         Positioned(
