@@ -108,7 +108,18 @@ abstract final class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: scheme.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: scheme.onSurface,
+        ),
+        contentTextStyle: TextStyle(
+          fontSize: 14,
+          height: 1.5,
+          color: scheme.onSurfaceVariant,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(
@@ -296,11 +307,17 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
+        elevation: 0,
         backgroundColor: scheme.surfaceContainerHighest,
         contentTextStyle: theme.textTheme.bodyMedium?.copyWith(
           color: scheme.onSurface,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.6),
+          ),
+        ),
       ),
       navigationBarTheme: NavigationBarThemeData(
         height: 64,
@@ -332,7 +349,7 @@ abstract final class AppTheme {
     required Color foreground,
   }) => FilledButton.styleFrom(
     minimumSize: const Size(0, Sizes.button),
-    padding: const EdgeInsets.symmetric(horizontal: 18),
+    padding: const EdgeInsets.symmetric(horizontal: 20),
     backgroundColor: background,
     foregroundColor: foreground,
     textStyle: const TextStyle(
@@ -340,19 +357,19 @@ abstract final class AppTheme {
       fontWeight: FontWeight.w700,
     ),
     elevation: 0,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+    shape: const StadiumBorder(),
   );
 
   static ButtonStyle _outlined(ColorScheme scheme) => OutlinedButton.styleFrom(
     minimumSize: const Size(0, Sizes.button),
-    padding: const EdgeInsets.symmetric(horizontal: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 18),
     foregroundColor: scheme.onSurface,
     side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.7)),
     textStyle: const TextStyle(
       fontSize: TypeScale.title,
       fontWeight: FontWeight.w600,
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.md)),
+    shape: const StadiumBorder(),
   );
 
   static ButtonStyle _text(ColorScheme scheme) => TextButton.styleFrom(

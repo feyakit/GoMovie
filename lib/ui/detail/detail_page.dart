@@ -19,6 +19,7 @@ import '../widgets/cover_backdrop.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/follow_button.dart';
+import '../theme/app_theme.dart';
 import '../theme/motion.dart';
 import '../theme/accent.dart';
 import '../widgets/stage_backdrop.dart';
@@ -1196,26 +1197,44 @@ class _DetailPageState extends State<DetailPage> {
         : '立即播放';
     return FocusRing(
       radius: m.button / 2,
-      child: FilledButton.icon(
-        key: const ValueKey('detail-play'),
-        onPressed: _ready
-            ? () => _play(details.resumeIndex, resume: true)
-            : null,
-        style: FilledButton.styleFrom(
-          minimumSize: Size(0, m.button),
-          iconSize: m.buttonIcon,
-          textStyle: TextStyle(
-            fontSize: m.buttonText,
-            fontWeight: FontWeight.w700,
-          ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: _ready ? AppTheme.brandGradient : null,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: _ready
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : null,
         ),
-        icon: const Icon(Icons.play_arrow_rounded),
-        label: FadeSwitcher(
-          child: Text(
-            label,
-            key: ValueKey(label),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        child: FilledButton.icon(
+          key: const ValueKey('detail-play'),
+          onPressed: _ready
+              ? () => _play(details.resumeIndex, resume: true)
+              : null,
+          style: FilledButton.styleFrom(
+            backgroundColor: _ready ? Colors.transparent : null,
+            shadowColor: Colors.transparent,
+            foregroundColor: _ready ? Colors.white : null,
+            minimumSize: Size(0, m.button),
+            iconSize: m.buttonIcon,
+            textStyle: TextStyle(
+              fontSize: m.buttonText,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: FadeSwitcher(
+            child: Text(
+              label,
+              key: ValueKey(label),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ),
