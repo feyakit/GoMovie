@@ -523,19 +523,25 @@ class _DetailPageState extends State<DetailPage> {
                   final scope = _resolveEpisodeScope(details);
                   return SliverMainAxisGroup(
                     slivers: [
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
-                          child: _episodeHeader(details, m, scope: scope),
+                      if (scope.routes.length > 1) ...[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                            child: Text(
+                              '线路',
+                              style: TextStyle(
+                                fontSize: m.section,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      if (scope.routes.length > 1)
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: m.chip + 6,
+                            height: m.chip + 10,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
+                              padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
                               itemCount: scope.routes.length,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(width: 8),
@@ -549,13 +555,20 @@ class _DetailPageState extends State<DetailPage> {
                             ),
                           ),
                         ),
+                      ],
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                          child: _episodeHeader(details, m, scope: scope),
+                        ),
+                      ),
                       if (scope.groupCount > 1)
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: m.chip + 2,
+                            height: m.chip + 4,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.fromLTRB(20, 2, 20, 0),
+                              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
                               itemCount: scope.groupCount,
                               separatorBuilder: (_, _) =>
                                   const SizedBox(width: 8),
@@ -565,7 +578,7 @@ class _DetailPageState extends State<DetailPage> {
                           ),
                         ),
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
                         sliver: SliverToBoxAdapter(
                           child: _swipeGroups(details, m, scope: scope),
                         ),
