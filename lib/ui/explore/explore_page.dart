@@ -448,8 +448,8 @@ class ExplorePageState extends State<ExplorePage> {
     }
     return StatusView(
       key: const ValueKey('empty'),
-      title: '这里还没有剧',
-      message: '换一个分类看看',
+      title: '这个分类还没有剧',
+      message: '换一个分类，或到「管理 › 站源」换一个站源再试',
       icon: Icons.inbox_outlined,
       action: '刷新',
       onAction: () => feed.reload(force: true),
