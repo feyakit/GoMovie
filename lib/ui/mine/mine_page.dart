@@ -14,6 +14,7 @@ import '../modules/modules_page.dart';
 import '../netdisk/netdisk_page.dart';
 import '../shell/app_shell.dart';
 import '../settings/settings_page.dart';
+import '../settings/settings_sections.dart';
 import '../widgets/drama_tile.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/page_header.dart';
@@ -64,47 +65,81 @@ class MinePage extends StatelessWidget {
     ),
   );
 
-  Widget _userCard(BuildContext context) =>
-      _UserCard(store: store, onTap: () => openUsers(context, store));
-
   void _openModules(BuildContext context) =>
       openPage<void>(context, (_) => ModulesPage(store: store));
 
   void _openNetdisk(BuildContext context) =>
       openPage<void>(context, (_) => NetdiskPage(store: store));
 
-  void _openSettings(BuildContext context) =>
-      openPage<void>(context, (_) => SettingsPage(store: store));
+  void _openSettings(
+    BuildContext context, {
+    SettingsGroup group = SettingsGroup.playback,
+  }) => openPage<void>(
+    context,
+    (_) => SettingsPage(store: store, initialGroup: group),
+  );
 
-  Widget _entries(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    spacing: 12,
-    children: [
-      _Entry(
+  Widget _entries(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    Widget row({
+      required IconData icon,
+      required String title,
+      String? subtitle,
+      required VoidCallback onTap,
+    }) => ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      leading: Icon(icon, size: 22, color: colors.onSurfaceVariant),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      trailing: Icon(
+        Icons.chevron_right_rounded,
+        color: colors.onSurfaceVariant,
+      ),
+      onTap: onTap,
+    );
+
+    final items = <Widget>[
+      row(
         icon: Icons.cloud_done_outlined,
         title: '网盘与订阅',
         subtitle: '夸克网盘 · 饭太硬 / TVBox',
         onTap: () => _openNetdisk(context),
       ),
+      row(
+        icon: Icons.play_circle_outline_rounded,
+        title: '播放设置',
+        subtitle: '倍速、画质、解码与弹幕',
+        onTap: () => _openSettings(context, group: SettingsGroup.playback),
+      ),
       if (store.canDownload)
-        _Entry(
+        row(
           icon: Icons.download_for_offline_outlined,
-          title: '下载',
+          title: '离线下载',
           onTap: () => _openDownloads(context),
         ),
       if (store.profile.admin)
-        _Entry(
+        row(
           icon: Icons.extension_outlined,
-          title: '模块',
+          title: '站源模块',
           onTap: () => _openModules(context),
         ),
-      _Entry(
+      row(
         icon: Icons.tune_rounded,
-        title: '设置',
-        onTap: () => _openSettings(context),
+        title: '全部设置',
+        subtitle: '外观、代理、缓存与关于',
+        onTap: () => _openSettings(context, group: SettingsGroup.appearance),
       ),
-    ],
-  );
+    ];
+
+    return GroupCard(
+      children: [
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const Divider(indent: 52, endIndent: 16, height: 1),
+          items[i],
+        ],
+      ],
+    );
+  }
 
   Widget _poster(
     BuildContext context,
@@ -137,10 +172,6 @@ class MinePage extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 24),
       children: [
         const PageHeader(title: '我的'),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _userCard(context),
-        ),
         SectionHeader(
           title: '最近观看',
           action: '全部',
@@ -182,14 +213,7 @@ class MinePage extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth - 48;
         final split = width >= side + gap + 400;
-        final summary = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _userCard(context),
-            const SizedBox(height: 16),
-            _entries(context),
-          ],
-        );
+        final summary = _entries(context);
         final recent = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -465,87 +489,6 @@ class _UserCard extends StatelessWidget {
                   color: colors.onSurfaceVariant,
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Entry extends StatelessWidget {
-  const _Entry({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.onTap,
-  });
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return FocusRing(
-      radius: 20,
-      child: Material(
-        color: colors.surfaceContainer,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: SizedBox(
-            height: subtitle == null ? 60 : 68,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                spacing: 14,
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(11),
-                    ),
-                    child: Icon(icon, size: 20, color: colors.onSurfaceVariant),
-                  ),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 2,
-                      children: [
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (subtitle case final sub?)
-                          Text(
-                            sub,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: colors.onSurfaceVariant,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ],
-              ),
             ),
           ),
         ),

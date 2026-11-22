@@ -149,7 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
             : store.themeColor.label,
         displayModes[platformDisplayMode(store.displayMode)],
       ].join(' · '),
-      SettingsGroup.playback => '倍速、清晰度、解码、手势与弹幕',
+      SettingsGroup.playback => '倍速、清晰度、解码与弹幕',
       SettingsGroup.download =>
         Platform.isAndroid ? '下载目录、画质、并发、清理缓存与自动导出' : '下载目录、画质、并发与清理缓存',
       SettingsGroup.proxy => '连接方式、代理地址',

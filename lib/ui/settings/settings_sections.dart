@@ -282,34 +282,34 @@ class SettingsSection extends StatelessWidget {
           ),
         ],
       ),
-      SettingsCard(
-        children: [
-          ?_editorError(),
-          ValueTile<int>(
-            title: '同时下载数量',
-            subtitle: admin ? null : adminOnly,
-            options: _counts,
-            value: settings?.downloadConcurrency,
-            onChanged: editable
-                ? (value) => _saveResource(
-                    context,
-                    settings.copyWith(downloadConcurrency: value),
-                  )
-                : null,
-          ),
-          SwitchTile(
-            title: '按站源分类保存',
-            subtitle: admin ? '新任务放入各站源的子目录，已有下载继续使用原位置' : adminOnly,
-            value: settings?.downloadBySource ?? false,
-            onChanged: editable
-                ? (value) => _saveResource(
-                    context,
-                    settings.copyWith(downloadBySource: value),
-                  )
-                : null,
-          ),
-        ],
-      ),
+      if (admin)
+        SettingsCard(
+          children: [
+            ?_editorError(),
+            ValueTile<int>(
+              title: '同时下载数量',
+              options: _counts,
+              value: settings?.downloadConcurrency,
+              onChanged: editable
+                  ? (value) => _saveResource(
+                      context,
+                      settings.copyWith(downloadConcurrency: value),
+                    )
+                  : null,
+            ),
+            SwitchTile(
+              title: '按站源分类保存',
+              subtitle: '新任务放入各站源的子目录，已有下载继续使用原位置',
+              value: settings?.downloadBySource ?? false,
+              onChanged: editable
+                  ? (value) => _saveResource(
+                      context,
+                      settings.copyWith(downloadBySource: value),
+                    )
+                  : null,
+            ),
+          ],
+        ),
       if (Platform.isAndroid)
         SettingsCard(
           children: [
