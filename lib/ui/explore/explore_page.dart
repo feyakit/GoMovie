@@ -569,7 +569,6 @@ class ExplorePageState extends State<ExplorePage> {
   bool _showPhoneCarousel(ExploreFeed explore) {
     final tab = explore.tab;
     if (explore.recommending || tab.id.startsWith('app:rank:')) return true;
-    if (explore.tabs.isNotEmpty && tab.id == explore.tabs.first.id) return true;
     const keywords = ['推荐', '排行', '热榜', '热门', '上新', '最新', '精选'];
     return keywords.any((word) => tab.name.contains(word));
   }
