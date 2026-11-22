@@ -1179,10 +1179,11 @@ class PlaybackLoading extends StatelessWidget {
           drama: session.detail.drama,
           sigma: 28,
           opacity: 0.55,
-          overlay: DecoratedBox(
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-            ),
+          overlay: LinearGradient(
+            colors: [
+              Colors.black.withValues(alpha: 0.45),
+              Colors.black.withValues(alpha: 0.45),
+            ],
           ),
         ),
         Center(
