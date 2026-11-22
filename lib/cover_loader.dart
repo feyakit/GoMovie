@@ -31,8 +31,8 @@ class CoverRequest {
 }
 
 abstract final class CoverLoader {
-  static const _limit = 6;
-  static const _delay = Duration(milliseconds: 150);
+  static const _limit = 10;
+  static const _delay = Duration(milliseconds: 40);
   static final _waiting = <CoverRequest>[];
   static var _running = 0;
 
