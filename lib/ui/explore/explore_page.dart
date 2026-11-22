@@ -387,9 +387,9 @@ class ExplorePageState extends State<ExplorePage> {
     }
     final phone = AppScope.formFactorOf(context) == FormFactor.phone;
     final desktop = AppScope.formFactorOf(context) == FormFactor.window;
-    final isFirstTab = explore.tabs.isNotEmpty && explore.tab.id == explore.tabs.first.id;
-    final hero = _hero(explore, phone: phone, isFirstTab: isFirstTab);
-    final items = phone && isFirstTab && explore.featured == null
+    final showCarousel = phone && _showPhoneCarousel(explore);
+    final hero = _hero(explore, phone: phone, showCarousel: showCarousel);
+    final items = showCarousel && explore.featured == null
         ? explore.items.skip(1).toList()
         : explore.items;
     return _grid(
@@ -566,10 +566,18 @@ class ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  bool _showPhoneCarousel(ExploreFeed explore) {
+    final tab = explore.tab;
+    if (explore.recommending || tab.id.startsWith('app:rank:')) return true;
+    if (explore.tabs.isNotEmpty && tab.id == explore.tabs.first.id) return true;
+    const keywords = ['推荐', '排行', '热榜', '热门', '上新', '最新', '精选'];
+    return keywords.any((word) => tab.name.contains(word));
+  }
+
   Widget? _hero(
     ExploreFeed explore, {
     required bool phone,
-    required bool isFirstTab,
+    required bool showCarousel,
   }) {
     if (!phone) {
       if (explore.resume case final entry?) {
@@ -593,17 +601,19 @@ class ExplorePageState extends State<ExplorePage> {
       }
     }
     final featured = explore.featured ??
-        (phone && isFirstTab ? explore.feed?.items.firstOrNull : null);
+        (showCarousel ? explore.feed?.items.firstOrNull : null);
     if (featured case final drama?) {
       final feedItems = explore.feed?.items ?? const <Drama>[];
       final carousel = phone && feedItems.length > 1
           ? feedItems.take(5).toList()
           : const <Drama>[];
+      final tabName = explore.tab.name;
+      final kicker = tabName == '推荐' || tabName == '全部' ? '今日推荐' : tabName;
       return ExploreHero(
-        key: ValueKey(('featured', drama.id)),
+        key: ValueKey(('featured', explore.tab.id, drama.id)),
         drama: drama,
         carousel: carousel,
-        kicker: '今日推荐',
+        kicker: kicker,
         meta: [
           if (drama.category.isNotEmpty) drama.category,
           if (drama.episodes > 0) '共 ${drama.episodes} 集',
