@@ -543,7 +543,9 @@ class ExplorePageState extends State<ExplorePage> {
     bool desktop,
   ) {
     // 手机首屏：主视觉下面先给一条横向海报架，避免一上来就是密集小卡。
-    final shelf = phone && items.length > 8 ? items.take(8).toList() : const <Drama>[];
+    final shelf = phone && items.length > 8
+        ? items.take(8).toList()
+        : const <Drama>[];
     final gridItems = shelf.isEmpty ? items : items.skip(shelf.length).toList();
     final heroSection = hero == null
         ? const SizedBox(key: ValueKey('none'), width: double.infinity)
@@ -579,9 +581,7 @@ class ExplorePageState extends State<ExplorePage> {
                     ),
             ),
             if (shelf.isNotEmpty)
-              SliverToBoxAdapter(
-                child: _shelf(context, explore, shelf, inset),
-              ),
+              SliverToBoxAdapter(child: _shelf(context, explore, shelf, inset)),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(inset, desktop ? 20 : 16, inset, 0),
               sliver: DramaSliverGrid(
