@@ -9,6 +9,7 @@ import '../netdisk/netdisk_page.dart';
 import '../explore/source_actions.dart';
 import '../shell/app_shell.dart';
 import '../settings/appearance_settings.dart';
+import '../settings/settings_page.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/page_header.dart';
