@@ -1,5 +1,5 @@
 enum ThemeColor {
-  crimson('赤金', 0xFFE23B4C),
+  crimson('靛紫', 0xFF6C5CE7),
   orange('暖橙', 0xFFFF664F),
   rose('玫红', 0xFFC25485),
   amber('琥珀', 0xFFB37000),
