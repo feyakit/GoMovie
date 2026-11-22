@@ -217,7 +217,7 @@ class _SourcePickerState extends State<SourcePicker> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
               child: Text(
-                '长按或右键站源可单独设置直连 / 代理',
+                '长按或右键站源可设直连 / 代理（开 TUN 全局 VPN 需配合规则分流）',
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colors.onSurfaceVariant,
                 ),

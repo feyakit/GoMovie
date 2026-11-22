@@ -239,6 +239,9 @@ func (d *Downloader) fetchProviderRequest(ctx context.Context, rawURL, referer s
 			return string(body), nil
 		}
 	}
+	if lastErr != nil && (errors.Is(lastErr, io.EOF) || strings.HasSuffix(lastErr.Error(), ": EOF")) {
+		lastErr = fmt.Errorf("连接被源站断开（EOF）：若开启了 VPN / 代理，请在 FlClash/Clash 规则中设为直连或关闭 VPN 后重试（%w）", lastErr)
+	}
 	if len(candidates) > 1 && lastErr != nil {
 		name := "站源"
 		if descriptor, ok := registeredDescriptor(ProviderSourceForURL(rawURL)); ok && descriptor.Name != "" {

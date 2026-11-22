@@ -15,10 +15,8 @@ import '../../resource_settings.dart';
 import '../../resource_settings_editor.dart';
 import '../../window_on_top.dart';
 import '../app_scope.dart';
-import '../netdisk/netdisk_page.dart';
 import '../player/danmaku_settings.dart';
 import '../update_prompt.dart';
-import '../users/users_view.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/form_text_field.dart';
 import '../widgets/group_card.dart';
@@ -31,15 +29,10 @@ import 'storage_view.dart';
 
 enum SettingsGroup {
   appearance('外观', Icons.palette_outlined),
-  playback('播放', Icons.play_arrow_rounded),
-  danmaku('弹幕', Icons.subtitles_outlined),
-  download('下载', Icons.download_rounded),
-  storage('存储', Icons.folder_outlined),
-  proxy('代理', Icons.language_rounded),
-  netdisk('网盘分享', Icons.cloud_outlined),
-  users('用户', Icons.manage_accounts_outlined),
-  about('关于', Icons.info_outline_rounded),
-  diagnostics('诊断', Icons.receipt_long_outlined);
+  playback('播放与弹幕', Icons.play_arrow_rounded),
+  download('下载与存储', Icons.download_rounded),
+  proxy('网络代理', Icons.language_rounded),
+  about('关于与数据', Icons.info_outline_rounded);
 
   const SettingsGroup(this.label, this.icon);
   final String label;
@@ -102,15 +95,19 @@ class SettingsSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 12,
             children: switch (group) {
-              SettingsGroup.playback => _playback(context),
-              SettingsGroup.danmaku => _danmaku(context),
-              SettingsGroup.download => _download(context),
-              SettingsGroup.storage => _storage(),
+              SettingsGroup.playback => [
+                ..._playback(context),
+                ..._danmaku(context),
+              ],
+              SettingsGroup.download => [
+                ..._download(context),
+                ..._storage(),
+              ],
               SettingsGroup.proxy => _proxy(context),
-              SettingsGroup.netdisk => _netdisk(context),
-              SettingsGroup.users => [UsersView(store: store, open: open)],
-              SettingsGroup.about => _about(context),
-              SettingsGroup.diagnostics => _diagnostics(),
+              SettingsGroup.about => [
+                ..._about(context),
+                ..._diagnostics(),
+              ],
               _ => const [],
             },
           ),
@@ -125,21 +122,6 @@ class SettingsSection extends StatelessWidget {
     ),
     null => null,
   };
-
-  List<Widget> _netdisk(BuildContext context) => [
-    SettingsCard(
-      children: [
-        SettingsTile(
-          title: '网盘分享播放',
-          subtitle: '扫码登录夸克后可直接播放别人的分享，不会读取或外传你网盘里的其他内容',
-          trailing: const Icon(Icons.chevron_right_rounded),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => NetdiskPage(store: store)),
-          ),
-        ),
-      ],
-    ),
-  ];
 
   List<Widget> _danmaku(BuildContext context) {
     final preferences = store.playbackPreferences;
@@ -559,13 +541,6 @@ class SettingsSection extends StatelessWidget {
             value: store.checkUpdates,
             onChanged: (value) =>
                 saveSetting(context, () => store.setCheckUpdates(value)),
-          ),
-          SwitchTile(
-            title: '匿名使用统计',
-            subtitle: '启动时发送随机编号、版本号、平台和所属版本，用于统计使用人数',
-            value: store.shareUsage,
-            onChanged: (value) =>
-                saveSetting(context, () => store.setShareUsage(value)),
           ),
         ],
       ),

@@ -20,20 +20,18 @@ typedef _Subpage = ({String title, WidgetBuilder body});
 
 void openUsers(BuildContext context, LocalStore store) => openPage<void>(
   context,
-  (context) => settingsSplit(context)
-      ? SettingsPage(store: store, initialGroup: SettingsGroup.users)
-      : Scaffold(
-          appBar: AppBar(title: Text(SettingsGroup.users.label)),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-            children: [
-              UsersView(
-                store: store,
-                open: (title, body) => _openFullPage(context, title, body),
-              ),
-            ],
-          ),
+  (context) => Scaffold(
+    appBar: AppBar(title: const Text('用户')),
+    body: ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      children: [
+        UsersView(
+          store: store,
+          open: (title, body) => _openFullPage(context, title, body),
         ),
+      ],
+    ),
+  ),
 );
 
 Future<void> openProxySettings(BuildContext context, LocalStore store) =>
@@ -151,17 +149,12 @@ class _SettingsPageState extends State<SettingsPage> {
             : store.themeColor.label,
         displayModes[platformDisplayMode(store.displayMode)],
       ].join(' · '),
-      SettingsGroup.playback => '倍速、清晰度、解码与手势',
-      SettingsGroup.danmaku => '字号、颜色、显示区域与屏蔽词',
+      SettingsGroup.playback => '倍速、清晰度、解码、手势与弹幕',
       SettingsGroup.download =>
-        Platform.isAndroid ? '默认画质、同时下载数量、自动导出' : '默认画质、VIP 集、同时下载数量',
-      SettingsGroup.storage => '下载目录、清理缓存、删除全部数据',
+        Platform.isAndroid ? '下载目录、画质、并发、清理缓存与自动导出' : '下载目录、画质、并发与清理缓存',
       SettingsGroup.proxy => '连接方式、代理地址',
-      SettingsGroup.netdisk => '扫码登录后播放别人的网盘分享',
-      SettingsGroup.users => '当前：${store.profile.name}',
       SettingsGroup.about =>
-        scope.version.isEmpty ? '版本未知' : '版本 ${scope.version}',
-      SettingsGroup.diagnostics => '播放调试日记、备份与恢复',
+        scope.version.isEmpty ? '版本、检查更新、备份与日记' : '版本 ${scope.version} · 备份与日记',
     };
   }
 
