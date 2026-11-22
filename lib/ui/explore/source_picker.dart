@@ -29,6 +29,7 @@ class SourcePicker extends StatefulWidget {
 
 class _SourcePickerState extends State<SourcePicker> {
   late String _bucket;
+  bool _searching = false;
   final _query = TextEditingController();
   final _scroll = ScrollController();
 
@@ -113,131 +114,166 @@ class _SourcePickerState extends State<SourcePicker> {
     final items = _visible();
     final current = _store.source;
     return Padding(
-      padding: EdgeInsets.only(
-        left: 12,
-        right: 12,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 12,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.78,
         ),
         decoration: BoxDecoration(
-          color: colors.surface,
+          color: colors.surfaceContainerLow,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
-              child: Row(
-                children: [
-                  Text('全部站源', style: theme.textTheme.titleMedium),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${items.length} 个',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 38,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: [
-                  for (final group in groups)
-                    if (group.key.isEmpty || group.count > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text('${group.label} ${group.count}'),
-                          selected: _bucket == group.key,
-                          onSelected: (_) => _selectBucket(group.key),
-                        ),
-                      ),
-                ],
-              ),
-            ),
-            if (_store.sources.length > 18)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                child: TextField(
-                  controller: _query,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText: '搜索站源',
-                    prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: colors.onSurfaceVariant.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(999),
                 ),
               ),
-            Flexible(
-              child: items.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: Text(
-                        '没有匹配的站源',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      controller: _scroll,
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+                child: SizedBox(
+                  height: 44,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          for (final site in items)
-                            _SourceChip(
-                              site: site,
-                              selected: site.id == current,
-                              networkMode: _store.sourceNetworkMode(site.id),
-                              onTap: () => _choose(site.id),
-                              onPickNetwork: () => _pickNetworkMode(site),
+                          Text(
+                            '选择站点',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                          Text(
+                            '长按设直连 / 代理 · 共 ${items.length} 个',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontSize: 10.5,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
-              child: Text(
-                '长按或右键站源可设直连 / 代理（开 TUN 全局 VPN 需配合规则分流）',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ),
-            if (_store.profile.admin)
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                  child: TextButton.icon(
-                    onPressed: () => Navigator.of(context).pop(
-                      SourcePicker.manageSourceId,
-                    ),
-                    icon: const Icon(Icons.tune_rounded, size: 18),
-                    label: const Text('管理站源'),
+                      if (_store.profile.admin)
+                        Positioned(
+                          left: 0,
+                          child: IconButton(
+                            tooltip: '管理站源',
+                            onPressed: () => Navigator.of(
+                              context,
+                            ).pop(SourcePicker.manageSourceId),
+                            icon: const Icon(Icons.tune_rounded, size: 20),
+                          ),
+                        ),
+                      Positioned(
+                        right: 0,
+                        child: IconButton(
+                          tooltip: _searching ? '收起搜索' : '搜索站点',
+                          onPressed: () {
+                            setState(() {
+                              _searching = !_searching;
+                              if (!_searching) _query.clear();
+                            });
+                          },
+                          icon: Icon(
+                            _searching
+                                ? Icons.close_rounded
+                                : Icons.search_rounded,
+                            size: 22,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
+              if (_searching)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(14, 2, 14, 8),
+                  child: TextField(
+                    controller: _query,
+                    autofocus: true,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      hintText: '搜索站源名称…',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              if (groups.where((g) => g.key.isEmpty || g.count > 0).length > 2)
+                SizedBox(
+                  height: 36,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    children: [
+                      for (final group in groups)
+                        if (group.key.isEmpty || group.count > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ChoiceChip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text('${group.label} ${group.count}'),
+                              selected: _bucket == group.key,
+                              onSelected: (_) => _selectBucket(group.key),
+                            ),
+                          ),
+                    ],
+                  ),
+                ),
+              Flexible(
+                child: items.isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(28),
+                        child: Text(
+                          '没有匹配的站源',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    : GridView.builder(
+                        controller: _scroll,
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              mainAxisExtent: 46,
+                            ),
+                        itemCount: items.length,
+                        itemBuilder: (_, index) {
+                          final site = items[index];
+                          return _SourceChip(
+                            site: site,
+                            selected: site.id == current,
+                            networkMode: _store.sourceNetworkMode(site.id),
+                            onTap: () => _choose(site.id),
+                            onPickNetwork: () => _pickNetworkMode(site),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -300,36 +336,35 @@ class _SourceChip extends StatelessWidget {
       onLongPress: onPickNetwork,
       onSecondaryTap: onPickNetwork,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: selected
-              ? colors.primary.withValues(alpha: 0.18)
-              : colors.surfaceContainerHighest,
+              ? colors.primary.withValues(alpha: 0.16)
+              : colors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? colors.primary : Colors.transparent,
+            color: selected
+                ? colors.primary.withValues(alpha: 0.7)
+                : Colors.transparent,
           ),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              site.name,
-              style: TextStyle(
-                fontSize: 13,
-                color: selected ? colors.primary : colors.onSurface,
-              ),
-            ),
-            if (site.group == 'tvbox') ...[
-              const SizedBox(width: 5),
-              Text(
-                'jar',
+            Flexible(
+              child: Text(
+                site.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 9,
-                  color: colors.onSurfaceVariant,
+                  fontSize: 13.5,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? colors.primary : colors.onSurface,
                 ),
               ),
-            ],
+            ),
             if (netLabel.isNotEmpty) ...[
               const SizedBox(width: 5),
               Container(
@@ -341,7 +376,7 @@ class _SourceChip extends StatelessWidget {
                 child: Text(
                   netLabel,
                   style: TextStyle(
-                    fontSize: 9,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.w600,
                     color: colors.tertiary,
                   ),
