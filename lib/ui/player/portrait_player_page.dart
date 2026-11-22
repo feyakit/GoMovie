@@ -885,7 +885,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
         Positioned(
           left: 0,
           right: 0,
-          top: padding.top + 68,
+          bottom: bottom + 84,
           child: FadePresence(
             child: session.routeNotice != null
                 ? PlayerRouteNoticeBadge(text: session.routeNotice!)

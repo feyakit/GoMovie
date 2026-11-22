@@ -487,7 +487,7 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
             Positioned(
               left: 0,
               right: 0,
-              top: 64,
+              bottom: 76,
               child: FadePresence(
                 child: _session.routeNotice != null
                     ? PlayerRouteNoticeBadge(text: _session.routeNotice!)

@@ -570,7 +570,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
           ),
         ),
         Positioned(
-          top: full ? 64 : 48,
+          bottom: full ? 76 : 16,
           left: 0,
           right: 0,
           child: FadePresence(
