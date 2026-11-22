@@ -56,7 +56,7 @@ void main() {
     tester,
   ) async {
     final theme = AppTheme.build(
-      const Color(0xFFE23B4C),
+      GoPalette.brand,
       Brightness.dark,
       television: false,
     );
@@ -110,7 +110,7 @@ void main() {
     tester,
   ) async {
     final theme = AppTheme.build(
-      const Color(0xFFE23B4C),
+      GoPalette.brand,
       Brightness.light,
       television: false,
     );

@@ -12,6 +12,7 @@ import 'package:gomovie_app/ui/player/player_dock.dart';
 import 'package:gomovie_app/ui/player/television_episode_panel.dart';
 import 'package:gomovie_app/ui/shell/app_shell.dart';
 import 'package:gomovie_app/ui/theme/app_theme.dart';
+import 'package:gomovie_app/ui/theme/palette.dart';
 import 'package:gomovie_app/ui/widgets/brand_mark.dart';
 import 'package:gomovie_app/ui/widgets/phone_navigation_bar.dart';
 import 'package:gomovie_app/ui/widgets/search_result_tile.dart';
@@ -57,7 +58,7 @@ void main() {
         MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.build(
-            const Color(0xFFE23B4C),
+            GoPalette.brand,
             light ? Brightness.light : Brightness.dark,
             television: television,
           ),
