@@ -42,7 +42,8 @@ class ExploreFeed extends ChangeNotifier {
 
   List<CatalogCategory> get tabs {
     final catalog = _catalog;
-    if (catalog == null) return const [];
+    // 有些站源（网盘分享）根本没有目录，categories 为空；解构前先挡住。
+    if (catalog == null || catalog.categories.isEmpty) return const [];
     final [all, ...genres] = catalog.categories;
     // 订阅源的分类名会重复（同名/同 id），去重后再当 tab，否则会出现两个一样的标签。
     final seen = <String>{};

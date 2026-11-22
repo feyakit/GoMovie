@@ -534,7 +534,10 @@ class LocalStore extends ChangeNotifier {
     if (locked) return '';
     final value = _userSettings['source'];
     if (sources.any((site) => site.id == value)) return value as String;
-    // 网盘分享没有目录，落到它首屏就是空白；默认挑第一个有目录的站源。
+    // 网盘分享没有目录、成人源不适合当默认；优先挑第一个有目录的普通站源。
+    for (final site in sources) {
+      if (site.group != 'netdisk' && !site.adult) return site.id;
+    }
     for (final site in sources) {
       if (site.group != 'netdisk') return site.id;
     }

@@ -446,6 +446,16 @@ class ExplorePageState extends State<ExplorePage> {
         },
       );
     }
+    if ((_explore?.tabs ?? const []).isEmpty) {
+      return StatusView(
+        key: const ValueKey('no-catalog'),
+        title: '这个站源没有目录',
+        message: '换一个站源，或直接用搜索找剧',
+        icon: Icons.category_outlined,
+        action: '换站源',
+        onAction: () => pickSource(context, widget.store),
+      );
+    }
     return StatusView(
       key: const ValueKey('empty'),
       title: '这个分类还没有剧',
@@ -453,6 +463,8 @@ class ExplorePageState extends State<ExplorePage> {
       icon: Icons.inbox_outlined,
       action: '刷新',
       onAction: () => feed.reload(force: true),
+      secondaryAction: '换站源',
+      onSecondaryAction: () => pickSource(context, widget.store),
     );
   }
 
