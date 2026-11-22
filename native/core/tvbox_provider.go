@@ -579,12 +579,24 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 	routes := strings.Split(item.PlayFrom, "$$$")
 	urlGroups := strings.Split(item.PlayURL, "$$$")
 	chapters := make([]Chapter, 0)
-	epIndex := 0
+	globalIndex := 0
+	seenRoutes := make(map[string]int, len(urlGroups))
 
 	for rIdx, group := range urlGroups {
 		routeName := ""
 		if rIdx < len(routes) {
 			routeName = strings.TrimSpace(routes[rIdx])
+		}
+		if len(urlGroups) > 1 {
+			if routeName == "" {
+				routeName = fmt.Sprintf("线路 %d", rIdx+1)
+			}
+			if count := seenRoutes[routeName]; count > 0 {
+				seenRoutes[routeName] = count + 1
+				routeName = fmt.Sprintf("%s (%d)", routeName, count+1)
+			} else {
+				seenRoutes[routeName] = 1
+			}
 		}
 		rawEntries := strings.Split(group, "#")
 		entries := make([]string, 0, len(rawEntries))
@@ -595,16 +607,19 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 		}
 		if len(entries) == 1 {
 			_, rawLink := parseEpisodeEntry(entries[0], "正片")
-			if shareURL := netdisk.ExtractShareURL(rawLink); shareURL != "" && netdisk.DetectProvider(shareURL) == "quark" {
-				if expanded, ok := p.expandQuarkShare(ctx, drama.ID, routeName, shareURL, &epIndex); ok {
-					chapters = append(chapters, expanded...)
-					continue
+			if shareURL := netdisk.ExtractShareURL(rawLink); shareURL != "" {
+				if provider := netdisk.DetectProvider(shareURL); provider == "quark" || provider == "uc" {
+					if expanded, ok := p.expandNetdiskShare(ctx, drama.ID, routeName, provider, shareURL, &globalIndex); ok {
+						chapters = append(chapters, expanded...)
+						continue
+					}
 				}
 			}
 		}
 
+		routeEpIndex := 0
 		for _, entry := range entries {
-			epName, rawLink := parseEpisodeEntry(entry, fmt.Sprintf("第 %d 集", epIndex+1))
+			epName, rawLink := parseEpisodeEntry(entry, fmt.Sprintf("第 %d 集", routeEpIndex+1))
 			if rawLink == "" {
 				continue
 			}
@@ -619,10 +634,11 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 			} else if before, _, ok := strings.Cut(rawLink, "$"); ok && (strings.HasPrefix(strings.ToLower(before), "http://") || strings.HasPrefix(strings.ToLower(before), "https://")) {
 				videoRef = strings.TrimSpace(before)
 			}
-			epIndex++
-			epNum, _ := json.Marshal(epIndex)
+			routeEpIndex++
+			globalIndex++
+			epNum, _ := json.Marshal(routeEpIndex)
 			chapters = append(chapters, Chapter{
-				ID:             fmt.Sprintf("%s#%d", drama.ID, epIndex),
+				ID:             fmt.Sprintf("%s#%d", drama.ID, globalIndex),
 				Source:         p.id,
 				Title:          epName,
 				VideoURL:       videoRef,
@@ -633,21 +649,28 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 	return drama, chapters, nil
 }
 
-func (p *tvboxProvider) expandQuarkShare(ctx context.Context, dramaID, routeName, shareURL string, epIndex *int) ([]Chapter, bool) {
+func (p *tvboxProvider) expandNetdiskShare(ctx context.Context, dramaID, routeName, providerName, shareURL string, globalIndex *int) ([]Chapter, bool) {
 	netdiskMu.Lock()
 	rt := netdiskRT
 	netdiskMu.Unlock()
 	var creds *netdisk.Credentials
 	if rt != nil && rt.store != nil {
-		creds, _ = rt.store.Get("quark")
+		creds, _ = rt.store.Get(providerName)
 	}
-	info, err := netdisk.NewQuark(creds).Share(ctx, shareURL)
+	var svc netdisk.Provider
+	switch providerName {
+	case "uc":
+		svc = netdisk.NewUC(creds)
+	default:
+		svc = netdisk.NewQuark(creds)
+	}
+	info, err := svc.Share(ctx, shareURL)
 	if err != nil || len(info.Episodes) == 0 {
 		return nil, false
 	}
 	out := make([]Chapter, 0, len(info.Episodes))
 	for i, ep := range info.Episodes {
-		*epIndex++
+		*globalIndex++
 		title := ep.Name
 		if sizeText := formatNetdiskSize(ep.Size); sizeText != "" {
 			title += " · " + sizeText
@@ -655,9 +678,9 @@ func (p *tvboxProvider) expandQuarkShare(ctx context.Context, dramaID, routeName
 		if routeName != "" {
 			title = routeName + " · " + title
 		}
-		epNum, _ := json.Marshal(*epIndex)
+		epNum, _ := json.Marshal(i + 1)
 		out = append(out, Chapter{
-			ID:             fmt.Sprintf("%s#%d", dramaID, *epIndex),
+			ID:             fmt.Sprintf("%s#%d", dramaID, *globalIndex),
 			Source:         p.id,
 			Title:          title,
 			VideoURL:       encodeNetdiskVideoRef(i, shareURL),
