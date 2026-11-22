@@ -28,7 +28,7 @@ import 'settings_rows.dart';
 import 'storage_view.dart';
 
 enum SettingsGroup {
-  appearance('外观', Icons.palette_outlined),
+  appearance('界面与布局', Icons.tune_rounded),
   playback('播放与弹幕', Icons.play_arrow_rounded),
   download('下载与存储', Icons.download_rounded),
   proxy('网络代理', Icons.language_rounded),
