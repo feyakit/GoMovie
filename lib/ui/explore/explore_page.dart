@@ -510,7 +510,7 @@ class ExplorePageState extends State<ExplorePage> {
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(horizontal: inset),
             itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final drama = items[index];
               return SizedBox(
