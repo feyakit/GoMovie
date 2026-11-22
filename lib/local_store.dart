@@ -533,9 +533,12 @@ class LocalStore extends ChangeNotifier {
   String get source {
     if (locked) return '';
     final value = _userSettings['source'];
-    return sources.any((site) => site.id == value)
-        ? value as String
-        : sources.firstOrNull?.id ?? '';
+    if (sources.any((site) => site.id == value)) return value as String;
+    // 网盘分享没有目录，落到它首屏就是空白；默认挑第一个有目录的站源。
+    for (final site in sources) {
+      if (site.group != 'netdisk') return site.id;
+    }
+    return sources.firstOrNull?.id ?? '';
   }
 
   /// 站源面板上次停留的分段（''/builtin/tvbox/netdisk）。

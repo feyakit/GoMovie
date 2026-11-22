@@ -44,12 +44,14 @@ class ExploreFeed extends ChangeNotifier {
     final catalog = _catalog;
     if (catalog == null) return const [];
     final [all, ...genres] = catalog.categories;
+    // 订阅源的分类名会重复（同名/同 id），去重后再当 tab，否则会出现两个一样的标签。
+    final seen = <String>{};
     return [
       if (catalog.recommends) recommendTab,
       all,
       for (final board in catalog.boards) rankingTab(board),
       ...genres,
-    ];
+    ].where((tab) => seen.add(tab.id)).toList(growable: false);
   }
 
   int? rankOf(Drama drama) => _ranks[drama.id];

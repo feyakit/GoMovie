@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../local_store.dart';
+import '../../models.dart';
 import '../app_scope.dart';
 import '../modules/modules_page.dart';
 import '../netdisk/netdisk_page.dart';
+import '../explore/source_actions.dart';
 import '../shell/app_shell.dart';
 import '../settings/appearance_settings.dart';
-import '../settings/settings_page.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/focus_ring.dart';
 import '../widgets/page_header.dart';
@@ -49,25 +50,19 @@ class MinePage extends StatelessWidget {
               _Group(
                 title: '站源与模块',
                 children: [
-                  for (final site in store.sources)
-                    _ManageRow(
-                      title: site.name,
-                      subtitle: '已启用',
-                      focusNode: site == store.sources.firstOrNull
-                          ? entryFocus
-                          : null,
-                      onTap: () => openPage<void>(
-                        context,
-                        (_) => SettingsPage(store: store),
-                      ),
-                    ),
-                  if (store.profile.admin)
-                    _ManageRow(
-                      title: '已安装模块',
-                      subtitle: '装卸与开关',
-                      focusNode: store.sources.isEmpty ? entryFocus : null,
-                      onTap: () => _openModules(context),
-                    ),
+                  _ManageRow(
+                    title: '站源',
+                    subtitle: store.sources.isEmpty
+                        ? '还没有可用站源'
+                        : '${store.sources.length} 个已启用 · 当前 ${SourceSite.byId(store.source).name}',
+                    focusNode: entryFocus,
+                    onTap: () => pickSource(context, store),
+                  ),
+                  _ManageRow(
+                    title: '已安装模块',
+                    subtitle: '装卸与开关',
+                    onTap: () => _openModules(context),
+                  ),
                 ],
               ),
               _Group(
