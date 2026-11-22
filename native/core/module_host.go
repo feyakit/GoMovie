@@ -1,6 +1,8 @@
 package core
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -13,6 +15,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/url"
 	"strconv"
 	"strings"
@@ -29,6 +32,7 @@ const (
 	moduleSleepLimit      = time.Minute
 	moduleHTMLBytes       = 8 << 20
 	moduleDerivedBytes    = 1024
+	moduleGzipLimit       = 16 << 20
 )
 
 type moduleCacheEntry struct {
@@ -180,6 +184,33 @@ func (p *jsProvider) hostUtilities(instance *jsInstance) map[string]any {
 				return nil, errors.New("Base64 内容无效")
 			}
 			return bytesValue(data), nil
+		},
+		"gzip": func(data goja.Value) (goja.Value, error) {
+			var buf bytes.Buffer
+			writer := gzip.NewWriter(&buf)
+			if _, err := writer.Write(bytesOf(data)); err != nil {
+				_ = writer.Close()
+				return nil, err
+			}
+			if err := writer.Close(); err != nil {
+				return nil, err
+			}
+			return bytesValue(buf.Bytes()), nil
+		},
+		"gunzip": func(data goja.Value) (goja.Value, error) {
+			reader, err := gzip.NewReader(bytes.NewReader(bytesOf(data)))
+			if err != nil {
+				return nil, errors.New("gzip 内容无效")
+			}
+			defer reader.Close()
+			plain, err := io.ReadAll(io.LimitReader(reader, moduleGzipLimit+1))
+			if err != nil {
+				return nil, errors.New("gzip 解压失败")
+			}
+			if len(plain) > moduleGzipLimit {
+				return nil, errors.New("gzip 解压内容过大")
+			}
+			return bytesValue(plain), nil
 		},
 		"md5": func(data goja.Value) goja.Value {
 			sum := md5.Sum(bytesOf(data))

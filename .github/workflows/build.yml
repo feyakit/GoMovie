@@ -11,6 +11,10 @@ on:
         description: 发布为测试预览版（Pre-release）
         type: boolean
         default: false
+      android_arm64_only:
+        description: 仅构建 64 位 Android（arm64-v8a）
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -124,7 +128,12 @@ jobs:
           fi
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
-      - run: python scripts/build_android.py
+      - run: |
+          if [ "${{ inputs.android_arm64_only }}" = "true" ]; then
+            python scripts/build_android.py --abi arm64-v8a
+          else
+            python scripts/build_android.py
+          fi
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
@@ -197,6 +206,7 @@ jobs:
           retention-days: 14
 
   ios:
+    if: ${{ inputs.android_arm64_only != true }}
     needs: prepare
     runs-on: macos-latest
     timeout-minutes: 60
@@ -265,7 +275,7 @@ jobs:
 
   release:
     needs: [checks, prepare, android, ios]
-    if: ${{ inputs.dry_run != true }}
+    if: ${{ !cancelled() && inputs.dry_run != true && needs.prepare.result == 'success' && needs.checks.result == 'success' && needs.android.result == 'success' && (needs.ios.result == 'success' || needs.ios.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
