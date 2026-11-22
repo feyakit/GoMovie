@@ -105,12 +105,12 @@ class MinePage extends StatelessWidget {
         subtitle: '夸克网盘 · 饭太硬 / TVBox',
         onTap: () => _openNetdisk(context),
       ),
-      row(
-        icon: Icons.play_circle_outline_rounded,
-        title: '播放设置',
-        subtitle: '倍速、画质、解码与弹幕',
-        onTap: () => _openSettings(context, group: SettingsGroup.playback),
-      ),
+      if (!store.historyTab)
+        row(
+          icon: Icons.history_rounded,
+          title: '观看历史',
+          onTap: () => _openHistory(context),
+        ),
       if (store.canDownload)
         row(
           icon: Icons.download_for_offline_outlined,
@@ -125,8 +125,8 @@ class MinePage extends StatelessWidget {
         ),
       row(
         icon: Icons.tune_rounded,
-        title: '全部设置',
-        subtitle: '外观、代理、缓存与关于',
+        title: '设置',
+        subtitle: '界面、播放、代理与关于',
         onTap: () => _openSettings(context, group: SettingsGroup.appearance),
       ),
     ];
@@ -165,96 +165,34 @@ class MinePage extends StatelessWidget {
     );
   }
 
-  Widget _phone(BuildContext context) {
-    const width = 100.0;
-    final history = store.history.take(20).toList();
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
-      children: [
-        const PageHeader(title: '我的'),
-        SectionHeader(
-          title: '最近观看',
-          action: '全部',
-          onAction: () => _openHistory(context),
-        ),
-        const SizedBox(height: 6),
-        if (history.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: _EmptyHistory(height: 150),
-          )
-        else
-          SizedBox(
-            height: ProgressPoster.extentFor(context, width),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: history.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, index) =>
-                  _poster(context, history[index], width),
-            ),
-          ),
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _entries(context),
-        ),
-      ],
-    );
-  }
+  Widget _phone(BuildContext context) => ListView(
+    padding: const EdgeInsets.only(bottom: 24),
+    children: [
+      const PageHeader(title: '我的'),
+      const SizedBox(height: 8),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: _entries(context),
+      ),
+    ],
+  );
 
   Widget _wide(BuildContext context) {
-    final desktop = AppScope.formFactorOf(context) == FormFactor.window;
-    final side = desktop ? 360.0 : 340.0;
-    final gap = desktop ? 32.0 : 28.0;
-    const sectionPadding = EdgeInsets.fromLTRB(4, 12, 0, 0);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth - 48;
-        final split = width >= side + gap + 400;
-        final summary = _entries(context);
-        final recent = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SectionHeader(
-              title: '最近观看',
-              action: '全部',
-              onAction: () => _openHistory(context),
-              padding: split ? const EdgeInsets.only(left: 4) : sectionPadding,
+    return ListView(
+      padding: const EdgeInsets.only(bottom: 32),
+      children: [
+        const PageHeader(title: '我的'),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+          child: Align(
+            alignment: Alignment.topLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: _entries(context),
             ),
-            const SizedBox(height: 10),
-            _historyGrid(
-              context,
-              split ? width - side - gap : width,
-              desktop: desktop,
-            ),
-          ],
-        );
-        return ListView(
-          padding: const EdgeInsets.only(bottom: 32),
-          children: [
-            const PageHeader(title: '我的'),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-              child: split
-                  ? Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: gap,
-                      children: [
-                        SizedBox(width: side, child: summary),
-                        Expanded(child: recent),
-                      ],
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      spacing: 12,
-                      children: [summary, recent],
-                    ),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ],
     );
   }
 
@@ -389,40 +327,6 @@ class MinePage extends StatelessWidget {
     );
   }
 
-  Widget _historyGrid(
-    BuildContext context,
-    double width, {
-    required bool desktop,
-  }) {
-    final minimum = desktop ? 140.0 : 120.0;
-    final columnGap = desktop ? 18.0 : 16.0;
-    final rowGap = desktop ? 22.0 : 20.0;
-    final columns = ((width + columnGap) / (minimum + columnGap)).floor().clamp(
-      1,
-      99,
-    );
-    final tile = (width - columnGap * (columns - 1)) / columns;
-    final history = store.history.take(columns * 2).toList();
-    if (history.isEmpty) return const _EmptyHistory(height: 240);
-    return Column(
-      spacing: rowGap,
-      children: [
-        for (var start = 0; start < history.length; start += columns)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: columnGap,
-            children: [
-              for (var index = start; index < start + columns; index++)
-                Expanded(
-                  child: index < history.length
-                      ? _poster(context, history[index], tile)
-                      : const SizedBox.shrink(),
-                ),
-            ],
-          ),
-      ],
-    );
-  }
 }
 
 class _UserCard extends StatelessWidget {

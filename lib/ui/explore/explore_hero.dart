@@ -278,28 +278,21 @@ class ExploreHero extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(metrics.radius),
               child: SizedBox(
-                height: 204,
+                height: 212,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    DramaCover(
+                    ColoredBox(color: _shade.withValues(alpha: 0.92)),
+                    CoverBackdrop(
                       drama: drama,
-                      radius: metrics.radius,
-                      details: false,
-                      exploreBlur: true,
-                    ),
-                    const DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          stops: [0.25, 0.7, 1],
-                          colors: [
-                            Color(0x000A0A0C),
-                            Color(0x880A0A0C),
-                            Color(0xE60A0A0C),
-                          ],
-                        ),
+                      sigma: 32,
+                      overlay: LinearGradient(
+                        stops: const [0, 0.55, 1],
+                        colors: [
+                          _shade.withValues(alpha: 0.94),
+                          _shade.withValues(alpha: 0.68),
+                          _shade.withValues(alpha: 0.3),
+                        ],
                       ),
                     ),
                     Positioned.fill(
@@ -308,37 +301,113 @@ class ExploreHero extends StatelessWidget {
                         child: InkWell(onTap: onDetail),
                       ),
                     ),
-                    Positioned(
-                      left: 16,
-                      right: 16,
-                      bottom: 14,
-                      child: IgnorePointer(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: 4,
-                          children: [
-                            Text(
-                              drama.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        spacing: 16,
+                        children: [
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x66000000),
+                                  blurRadius: 18,
+                                  offset: Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: SizedBox(
+                              width: 120,
+                              height: 180,
+                              child: DramaCover(
+                                drama: drama,
+                                radius: 14,
+                                details: false,
+                                exploreBlur: true,
                               ),
                             ),
-                            Text(
-                              '$kicker · $meta',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: Colors.white.withValues(alpha: 0.78),
+                          ),
+                          Expanded(
+                            child: IgnorePointer(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 8,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.14),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      spacing: 6,
+                                      children: [
+                                        const DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            gradient: AppTheme.brandGradient,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: SizedBox(width: 6, height: 6),
+                                        ),
+                                        Text(
+                                          kicker,
+                                          style: TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white.withValues(alpha: 0.92),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    drama.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.25,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    meta,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      height: 1.35,
+                                      color: Colors.white.withValues(alpha: 0.78),
+                                    ),
+                                  ),
+                                  if (progress case final progress?)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: LinearProgressIndicator(
+                                        value: progress.clamp(0.0, 1.0),
+                                        minHeight: 4,
+                                        color: colors.primaryFixedDim,
+                                        backgroundColor: Colors.white.withValues(alpha: 0.25),
+                                        borderRadius: BorderRadius.circular(2),
+                                        stopIndicatorColor: Colors.transparent,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                     IgnorePointer(
@@ -355,7 +424,7 @@ class ExploreHero extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: AppTheme.brandGradient,
