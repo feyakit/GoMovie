@@ -11,7 +11,7 @@
 ![Flutter](https://img.shields.io/badge/Flutter-3.47.9-02569B?style=flat-square&logo=flutter&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Windows%20%7C%20macOS%20%7C%20TV-16161B?style=flat-square)
 
-[下载安装](#安装) · [核心功能](#核心功能) · [网盘与订阅](#网盘分享与-tvbox-订阅) · [使用说明](#使用说明) · [免责与许可](#免责声明与使用规范) · [开发](#开发)
+[下载安装](#安装) · [核心功能](#核心功能) · [网盘与订阅](#网盘分享与-tvbox-订阅) · [使用说明](#使用说明) · [免责与许可](#免责声明与使用规范) · [开发](#开发) · [体验重构规格](docs/experience-redesign/README.md)
 
 </div>
 
@@ -24,6 +24,9 @@
 
 > [!WARNING]
 > 项目仍处于持续迭代阶段，不对用户本地数据做绝对担保，重要追剧与记录建议定期通过「设置 › 诊断」导出备份。
+
+> [!NOTE]
+> 手机与电视的体验重构规格在 [docs/experience-redesign](docs/experience-redesign/README.md)。那是进行中的设计与验收文档，不是已发布版本的说明。下面的功能介绍仍对应当前已发布界面。
 
 ## 核心功能
 
