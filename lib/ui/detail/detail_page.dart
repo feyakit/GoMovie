@@ -439,21 +439,21 @@ class _DetailPageState extends State<DetailPage> {
                 drama,
                 top + 300,
                 Padding(
-                  padding: EdgeInsets.fromLTRB(20, top + 4, 20, 0),
+                  padding: EdgeInsets.fromLTRB(16, top, 16, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 16,
+                        spacing: 14,
                         children: [
                           _cover(drama, m),
                           Expanded(
                             child: Padding(
-                              padding: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.only(top: 2),
                               child: _enter(
                                 0,
-                                _followingHeadline(details, m, 6),
+                                _followingHeadline(details, m, 2),
                               ),
                             ),
                           ),
@@ -461,18 +461,18 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                       if (_stats(drama, m) case final stats?)
                         Padding(
-                          padding: const EdgeInsets.only(top: 14),
+                          padding: const EdgeInsets.only(top: 10),
                           child: _enter(1, stats),
                         ),
                       if (_tags(drama, m) case final tags?)
                         Padding(
-                          padding: const EdgeInsets.only(top: 10),
+                          padding: const EdgeInsets.only(top: 8),
                           child: _enter(2, tags),
                         ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 16),
+                        padding: const EdgeInsets.only(top: 12),
                         child: Row(
-                          spacing: 12,
+                          spacing: 10,
                           children: [
                             Expanded(child: _playButton(details, m)),
                             if (_canDownload)
@@ -492,7 +492,7 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                       if (drama.description.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 16),
+                          padding: const EdgeInsets.only(top: 10),
                           child: _enter(3, _description(drama, m)),
                         ),
                       if (details.warning.isNotEmpty)

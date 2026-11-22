@@ -52,15 +52,28 @@ class SourceBar extends StatelessWidget {
     );
     return switch (form) {
       FormFactor.phone => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 0, 8, 0),
+        padding: const EdgeInsets.fromLTRB(14, 0, 8, 0),
         child: SizedBox(
-          height: 64,
+          height: 54,
           child: Row(
             children: [
               ...leading,
-              if (leading.isNotEmpty) const SizedBox(width: 6),
-              pill,
-              search,
+              if (leading.isNotEmpty) const SizedBox(width: 4),
+              Builder(
+                builder: (anchor) => ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.42,
+                  ),
+                  child: _SourceSwitcherPill(
+                    label: source,
+                    onTap: () => onSwitchSource(anchor),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _PhoneSearchPill(hint: hint, onTap: onOpenSearch),
+              ),
               ...actions,
             ],
           ),
@@ -299,4 +312,50 @@ class _RecentSearchFieldState extends State<_RecentSearchField> {
       ),
     ),
   );
+}
+
+class _PhoneSearchPill extends StatelessWidget {
+  const _PhoneSearchPill({required this.hint, required this.onTap});
+
+  final String hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.surfaceContainerHigh.withValues(alpha: 0.72),
+      shape: StadiumBorder(
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.45)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            children: [
+              Icon(
+                Icons.search_rounded,
+                size: 16,
+                color: colors.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  hint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
