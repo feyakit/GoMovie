@@ -14,7 +14,7 @@ import '../settings/settings_page.dart';
 import '../settings/sorani_account_view.dart';
 import '../shell/app_shell.dart';
 import '../theme/motion.dart';
-import '../theme/tokens.dart';
+import '../theme/tokens.dart' show TypeScale;
 import '../widgets/bar_button.dart';
 import '../widgets/category_tabs.dart';
 import '../widgets/choice_panel.dart';
