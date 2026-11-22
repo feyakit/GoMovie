@@ -127,11 +127,14 @@ class DramaCover extends StatelessWidget {
             Positioned(
               left: 9,
               right: showScore && drama.score.isNotEmpty ? 46 : 9,
-              bottom: 9,
+              bottom: 8,
               child: Text(
                 drama.badge.isNotEmpty ? drama.badge : '共 ${drama.episodes} 集',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textAlign: showScore && drama.score.isNotEmpty
+                    ? TextAlign.start
+                    : TextAlign.end,
                 style: const TextStyle(color: Colors.white, fontSize: 11),
               ),
             ),
@@ -162,6 +165,29 @@ class DramaCover extends StatelessWidget {
               right: rank == null ? null : 8,
               top: 8,
               child: const VipBadge(),
+            )
+          else if (details &&
+              rank == null &&
+              RegExp(r'^(19|20)\d{2}').hasMatch(drama.onlineDate.trim()))
+            Positioned(
+              left: 8,
+              top: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: vipGold.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  drama.onlineDate.trim().substring(0, 4),
+                  style: const TextStyle(
+                    color: onVipGold,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+              ),
             ),
           if (rank case final rank?)
             Positioned(left: 0, top: 0, child: RankBadge(rank: rank)),

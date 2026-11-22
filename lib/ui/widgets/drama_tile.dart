@@ -113,22 +113,28 @@ class _PosterButtonState extends State<_PosterButton> {
   }
 }
 
-Widget _line(BuildContext context, String text, TextStyle style, int lines) =>
-    Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: SizedBox(
-        height:
-            MediaQuery.textScalerOf(context).scale(style.fontSize!) *
-            style.height! *
-            lines,
-        child: Text(
-          text,
-          maxLines: lines,
-          overflow: TextOverflow.ellipsis,
-          style: style,
-        ),
-      ),
-    );
+Widget _line(
+  BuildContext context,
+  String text,
+  TextStyle style,
+  int lines, {
+  TextAlign align = TextAlign.start,
+}) => Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 2),
+  child: SizedBox(
+    height:
+        MediaQuery.textScalerOf(context).scale(style.fontSize!) *
+        style.height! *
+        lines,
+    child: Text(
+      text,
+      maxLines: lines,
+      overflow: TextOverflow.ellipsis,
+      textAlign: align,
+      style: style,
+    ),
+  ),
+);
 
 class DramaTile extends StatelessWidget {
   const DramaTile({
@@ -167,11 +173,17 @@ class DramaTile extends StatelessWidget {
     color: Theme.of(context).colorScheme.onSurfaceVariant,
   );
 
-  static double extentFor(BuildContext context, double width) {
+  static double extentFor(
+    BuildContext context,
+    double width, {
+    bool hasSubtitle = false,
+  }) {
     final scaler = MediaQuery.textScalerOf(context);
     final title = scaler.scale(titleStyle(context).fontSize!) * 1.25 * 3;
-    final subtitle = scaler.scale(subtitleStyle(context).fontSize!) * 1.25;
-    return (width * 1.5 + 8 + title + 3 + subtitle).ceilToDouble();
+    final sub = hasSubtitle
+        ? 3 + scaler.scale(subtitleStyle(context).fontSize!) * 1.25
+        : 0.0;
+    return (width * 1.5 + 8 + title + sub).ceilToDouble();
   }
 
   @override
@@ -196,9 +208,23 @@ class DramaTile extends StatelessWidget {
     autofocus: autofocus,
     caption: [
       const SizedBox(height: 8),
-      _line(context, drama.title, titleStyle(context), 3),
-      const SizedBox(height: 3),
-      _line(context, subtitle ?? drama.category, subtitleStyle(context), 1),
+      _line(
+        context,
+        drama.title,
+        titleStyle(context),
+        3,
+        align: TextAlign.center,
+      ),
+      if (subtitle case final text?) ...[
+        const SizedBox(height: 3),
+        _line(
+          context,
+          text,
+          subtitleStyle(context),
+          1,
+          align: TextAlign.center,
+        ),
+      ],
     ],
   );
 }

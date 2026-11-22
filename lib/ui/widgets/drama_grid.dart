@@ -32,14 +32,22 @@ double dramaTileWidth(BuildContext context, double width) {
   return (width - (columns - 1) * spacing) / columns;
 }
 
-SliverGridDelegate dramaGridDelegate(BuildContext context, double width) {
+SliverGridDelegate dramaGridDelegate(
+  BuildContext context,
+  double width, {
+  bool hasSubtitle = false,
+}) {
   final (columns, spacing, runSpacing) = _gridLayout(context, width);
   final tile = dramaTileWidth(context, width);
   return SliverGridDelegateWithFixedCrossAxisCount(
     crossAxisCount: columns,
     crossAxisSpacing: spacing,
     mainAxisSpacing: runSpacing,
-    mainAxisExtent: DramaTile.extentFor(context, tile),
+    mainAxisExtent: DramaTile.extentFor(
+      context,
+      tile,
+      hasSubtitle: hasSubtitle,
+    ),
   );
 }
 
@@ -102,7 +110,11 @@ class DramaSliverGrid extends StatelessWidget {
         ? const <String, int>{}
         : firstIndexById(items, (drama) => drama.id);
     return SliverGrid.builder(
-      gridDelegate: dramaGridDelegate(context, width),
+      gridDelegate: dramaGridDelegate(
+        context,
+        width,
+        hasSubtitle: subtitleOf != null,
+      ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final drama = items[index];
