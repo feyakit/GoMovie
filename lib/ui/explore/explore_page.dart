@@ -14,10 +14,12 @@ import '../settings/settings_page.dart';
 import '../settings/sorani_account_view.dart';
 import '../shell/app_shell.dart';
 import '../theme/motion.dart';
+import '../theme/tokens.dart';
 import '../widgets/bar_button.dart';
 import '../widgets/category_tabs.dart';
 import '../widgets/choice_panel.dart';
 import '../widgets/drama_grid.dart';
+import '../widgets/drama_tile.dart';
 import '../widgets/follow_button.dart';
 import '../widgets/motion/motion_widgets.dart';
 import '../widgets/page_header.dart';
@@ -468,6 +470,67 @@ class ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  Widget _shelf(
+    BuildContext context,
+    ExploreFeed explore,
+    List<Drama> items,
+    double inset,
+  ) {
+    const width = 116.0;
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.fromLTRB(inset, 20, inset, 10),
+          child: Row(
+            children: [
+              Text(
+                '热门推荐',
+                style: TextStyle(
+                  fontSize: TypeScale.heading,
+                  fontWeight: FontWeight.w700,
+                  color: scheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '横滑查看更多',
+                style: TextStyle(
+                  fontSize: TypeScale.label,
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: DramaTile.extentFor(context, width),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: EdgeInsets.symmetric(horizontal: inset),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final drama = items[index];
+              return SizedBox(
+                width: width,
+                child: DramaTile(
+                  drama: drama,
+                  heroScope: 'drama',
+                  showScore: !explore.recommending,
+                  exploreBlur: true,
+                  onTap: () => _open(drama),
+                  onMore: () => quickFollow(context, widget.store, drama),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _grid(
     ExploreFeed explore,
     DramaFeed feed,
@@ -479,6 +542,9 @@ class ExplorePageState extends State<ExplorePage> {
     bool phone,
     bool desktop,
   ) {
+    // 手机首屏：主视觉下面先给一条横向海报架，避免一上来就是密集小卡。
+    final shelf = phone && items.length > 8 ? items.take(8).toList() : const <Drama>[];
+    final gridItems = shelf.isEmpty ? items : items.skip(shelf.length).toList();
     final heroSection = hero == null
         ? const SizedBox(key: ValueKey('none'), width: double.infinity)
         : Padding(
@@ -512,11 +578,15 @@ class ExplorePageState extends State<ExplorePage> {
                       ),
                     ),
             ),
+            if (shelf.isNotEmpty)
+              SliverToBoxAdapter(
+                child: _shelf(context, explore, shelf, inset),
+              ),
             SliverPadding(
               padding: EdgeInsets.fromLTRB(inset, desktop ? 20 : 16, inset, 0),
               sliver: DramaSliverGrid(
                 width: constraints.maxWidth - inset * 2,
-                items: items,
+                items: gridItems,
                 rankOf: explore.rankOf,
                 autofocus:
                     television && hero == null && ShellForeground.of(context),
