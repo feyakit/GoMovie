@@ -233,7 +233,7 @@ class ProgressPoster extends StatelessWidget {
   static double extentFor(BuildContext context, double width) {
     final scaler = MediaQuery.textScalerOf(context);
     final television = AppScope.of(context).television;
-    final title = scaler.scale(television ? 15 : 14) * 1.3;
+    final title = scaler.scale(television ? 15 : 14) * 1.3 * 2;
     final caption = scaler.scale(television ? 13 : 12) * 1.3;
     return (width * 1.5 + 8 + title + 2 + caption).ceilToDouble();
   }
@@ -260,23 +260,29 @@ class ProgressPoster extends StatelessWidget {
             if (tag case final tag?)
               Positioned(
                 left: 8,
+                right: 8,
                 top: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    tag,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.58),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      tag,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.3,
+                      ),
                     ),
                   ),
                 ),
@@ -400,7 +406,7 @@ class ProgressPoster extends StatelessWidget {
               fontWeight: FontWeight.w600,
               height: 1.3,
             ),
-            1,
+            2,
           ),
           const SizedBox(height: 2),
           _line(
