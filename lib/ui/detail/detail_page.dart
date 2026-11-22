@@ -1294,9 +1294,15 @@ class _DetailPageState extends State<DetailPage> {
         : null;
     final isNetdisk = activeRoute != null
         ? activeRoute.entries.any(
-            (e) => e.episode.videoUrl.startsWith('netdisk://'),
+            (e) => (e.episode.raw['videoUrl'] as String? ?? '').startsWith(
+              'netdisk://',
+            ),
           )
-        : details.episodes.any((e) => e.videoUrl.startsWith('netdisk://'));
+        : details.episodes.any(
+            (e) => (e.raw['videoUrl'] as String? ?? '').startsWith(
+              'netdisk://',
+            ),
+          );
     final unit = isNetdisk ? '个文件' : '集';
     final summary = [
       if (activeRoute != null)
