@@ -382,13 +382,15 @@ class ExplorePageState extends State<ExplorePage> {
     Widget tabs,
   ) {
     final feed = explore.feed!;
-    final hero = _hero(explore);
-    final items = explore.items;
     if (feed.items.isEmpty) {
       return FadeSwitcher(child: _status(feed));
     }
     final phone = AppScope.formFactorOf(context) == FormFactor.phone;
     final desktop = AppScope.formFactorOf(context) == FormFactor.window;
+    final hero = _hero(explore, phone: phone);
+    final items = phone && explore.recommending && explore.featured == null
+        ? explore.items.skip(1).toList()
+        : explore.items;
     return _grid(
       explore,
       feed,
@@ -563,27 +565,31 @@ class ExplorePageState extends State<ExplorePage> {
     );
   }
 
-  Widget? _hero(ExploreFeed explore) {
-    if (explore.resume case final entry?) {
-      final drama = entry.drama;
-      final total = drama.episodes;
-      final next = entry.finished && entry.episode < total
-          ? entry.episode + 1
-          : entry.episode;
-      return ExploreHero(
-        key: ValueKey(('resume', drama.id)),
-        drama: drama,
-        kicker: '继续观看',
-        meta: total > 0
-            ? '看到第 ${entry.episode} 集 · 共 $total 集'
-            : '看到第 ${entry.episode} 集',
-        progress: total > 0 ? entry.episode / total : null,
-        action: '继续第 $next 集',
-        onPlay: () => _open(drama, autoplay: true),
-        onDetail: () => _open(drama),
-      );
+  Widget? _hero(ExploreFeed explore, {required bool phone}) {
+    if (!phone) {
+      if (explore.resume case final entry?) {
+        final drama = entry.drama;
+        final total = drama.episodes;
+        final next = entry.finished && entry.episode < total
+            ? entry.episode + 1
+            : entry.episode;
+        return ExploreHero(
+          key: ValueKey(('resume', drama.id)),
+          drama: drama,
+          kicker: '继续观看',
+          meta: total > 0
+              ? '看到第 ${entry.episode} 集 · 共 $total 集'
+              : '看到第 ${entry.episode} 集',
+          progress: total > 0 ? entry.episode / total : null,
+          action: '继续第 $next 集',
+          onPlay: () => _open(drama, autoplay: true),
+          onDetail: () => _open(drama),
+        );
+      }
     }
-    if (explore.featured case final drama?) {
+    final featured = explore.featured ??
+        (phone && explore.recommending ? explore.feed?.items.firstOrNull : null);
+    if (featured case final drama?) {
       return ExploreHero(
         key: ValueKey(('featured', drama.id)),
         drama: drama,
