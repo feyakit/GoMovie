@@ -26,151 +26,10 @@ import '../widgets/stage_backdrop.dart';
 import '../widgets/motion/motion_widgets.dart';
 import '../widgets/status_view.dart';
 import '../widgets/swipe_switch.dart';
+import 'detail_metrics.dart';
+import 'detail_routes.dart';
 import 'season_strip.dart';
 import 'television_detail.dart';
-
-class _Metrics {
-  const _Metrics({
-    required this.cover,
-    required this.coverRadius,
-    required this.title,
-    required this.meta,
-    required this.tag,
-    required this.note,
-    required this.body,
-    required this.bodyHeight,
-    required this.button,
-    required this.buttonText,
-    required this.buttonIcon,
-    required this.section,
-    required this.summary,
-    required this.chip,
-    required this.chipRadius,
-    required this.chipText,
-    required this.chipPadding,
-    required this.cell,
-    required this.cellRadius,
-    required this.cellText,
-    required this.cellGap,
-    this.columns = 0,
-    this.cellWidth = 0,
-    this.follow = 40,
-  });
-  final Size cover;
-  final double coverRadius;
-  final double title;
-  final double meta;
-  final double tag;
-  final double note;
-  final double body;
-  final double bodyHeight;
-  final double button;
-  final double buttonText;
-  final double buttonIcon;
-  final double section;
-  final double summary;
-  final double chip;
-  final double chipRadius;
-  final double chipText;
-  final double chipPadding;
-  final double cell;
-  final double cellRadius;
-  final double cellText;
-  final double cellGap;
-  final int columns;
-  final double cellWidth;
-  final double follow;
-
-  int columnsFor(double width) => columns > 0
-      ? columns
-      : math.max(4, ((width + cellGap) / (cellWidth + cellGap)).floor());
-}
-
-const _phone = _Metrics(
-  cover: Size(120, 180),
-  coverRadius: 12,
-  title: 22,
-  meta: 13,
-  tag: 12,
-  note: 12,
-  body: 14,
-  bodyHeight: 1.6,
-  button: 52,
-  buttonText: 16,
-  buttonIcon: 24,
-  section: 17,
-  summary: 13,
-  chip: 32,
-  chipRadius: 8,
-  chipText: 13,
-  chipPadding: 14,
-  cell: 54,
-  cellRadius: 12,
-  cellText: 16,
-  cellGap: 10,
-  columns: 5,
-);
-
-const _desktop = _Metrics(
-  cover: Size(160, 240),
-  coverRadius: 14,
-  title: 28,
-  meta: 14,
-  tag: 12,
-  note: 13,
-  body: 14,
-  bodyHeight: 1.7,
-  button: 48,
-  buttonText: 15,
-  buttonIcon: 22,
-  section: 18,
-  summary: 13,
-  chip: 32,
-  chipRadius: 8,
-  chipText: 13,
-  chipPadding: 14,
-  cell: 52,
-  cellRadius: 12,
-  cellText: 16,
-  cellGap: 10,
-  cellWidth: 72,
-);
-
-const _pad = _Metrics(
-  cover: Size(150, 225),
-  coverRadius: 14,
-  title: 24,
-  meta: 14,
-  tag: 13,
-  note: 13,
-  body: 15,
-  bodyHeight: 1.6,
-  button: 56,
-  buttonText: 16,
-  buttonIcon: 24,
-  section: 18,
-  summary: 13,
-  chip: 40,
-  chipRadius: 10,
-  chipText: 14,
-  chipPadding: 16,
-  cell: 56,
-  cellRadius: 12,
-  cellText: 17,
-  cellGap: 12,
-  cellWidth: 76,
-  follow: 44,
-);
-
-typedef _RouteEntry = ({Episode episode, int index, String label});
-typedef _EpisodeRoute = ({String name, List<_RouteEntry> entries});
-typedef _EpisodeScope = ({
-  List<_EpisodeRoute> routes,
-  String routeName,
-  List<_RouteEntry> entries,
-  int groupCount,
-  int group,
-});
 
 class DetailPage extends StatefulWidget {
   const DetailPage({
@@ -563,7 +422,7 @@ class _DetailPageState extends State<DetailPage> {
   );
 
   Widget _phonePage(DramaDetails details) {
-    const m = _phone;
+    const m = detailPhoneMetrics;
     final top = MediaQuery.paddingOf(context).top + kToolbarHeight;
     final drama = details.drama;
     return Scaffold(
@@ -723,7 +582,7 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _widePage(DramaDetails details, {required bool desktop}) {
-    final m = desktop ? _desktop : _pad;
+    final m = desktop ? detailDesktopMetrics : detailPadMetrics;
     final top = MediaQuery.paddingOf(context).top + 64;
     final inset = desktop ? 32.0 : 24.0;
     final gap = desktop ? 40.0 : 32.0;
@@ -925,7 +784,7 @@ class _DetailPageState extends State<DetailPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _cover(drama, _phone, hero: false),
+                  _cover(drama, detailPhoneMetrics, hero: false),
                   const SizedBox(height: 20),
                   Text(
                     drama.title,
@@ -951,7 +810,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _cover(Drama drama, _Metrics m, {bool hero = true}) => DecoratedBox(
+  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) => DecoratedBox(
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(m.coverRadius),
       boxShadow: const [
@@ -974,7 +833,7 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _headline(
     DramaDetails details,
-    _Metrics m, {
+    DetailMetrics m, {
     double spacing = 8,
     List<Widget> trailing = const [],
   }) {
@@ -1048,7 +907,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _followingHeadline(DramaDetails details, _Metrics m, double top) =>
+  Widget _followingHeadline(DramaDetails details, DetailMetrics m, double top) =>
       ConstrainedBox(
         constraints: BoxConstraints(minHeight: m.cover.height - top),
         child: IntrinsicHeight(
@@ -1070,7 +929,7 @@ class _DetailPageState extends State<DetailPage> {
         ),
       );
 
-  Widget? _stats(Drama drama, _Metrics m) {
+  Widget? _stats(Drama drama, DetailMetrics m) {
     final stats = [
       if (drama.onlineDate.isNotEmpty) '${drama.onlineDate} 上线',
       if (drama.views.isNotEmpty && drama.views != '0') '播放 ${drama.views}',
@@ -1085,7 +944,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget? _tags(Drama drama, _Metrics m) {
+  Widget? _tags(Drama drama, DetailMetrics m) {
     if (drama.tags.isEmpty) return null;
     final colors = Theme.of(context).colorScheme;
     return Wrap(
@@ -1107,7 +966,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _description(Drama drama, _Metrics m) {
+  Widget _description(Drama drama, DetailMetrics m) {
     final colors = Theme.of(context).colorScheme;
     final style = TextStyle(
       fontSize: m.body,
@@ -1167,7 +1026,7 @@ class _DetailPageState extends State<DetailPage> {
     return exceeds;
   }
 
-  Widget _warning(String text, _Metrics m) {
+  Widget _warning(String text, DetailMetrics m) {
     final color = Theme.of(context).colorScheme.error;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1191,7 +1050,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _playButton(DramaDetails details, _Metrics m) {
+  Widget _playButton(DramaDetails details, DetailMetrics m) {
     final label = details.watch != null && details.episodes.isNotEmpty
         ? '继续播放 · 第 ${details.episodes[details.resumeIndex].number} 集'
         : '立即播放';
@@ -1241,7 +1100,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _downloadButton(_Metrics m) => FocusRing(
+  Widget _downloadButton(DetailMetrics m) => FocusRing(
     radius: m.button / 2,
     child: FilledButton.tonalIcon(
       onPressed: _ready ? _download : null,
@@ -1329,101 +1188,15 @@ class _DetailPageState extends State<DetailPage> {
     return true;
   }
 
-  static String _compactEpisodeLabel(String rawLabel, int number) {
-    final trimmed = rawLabel.trim();
-    if (trimmed.isEmpty ||
-        trimmed == '第$number集' ||
-        _numericTitlePattern.hasMatch(trimmed)) {
-      return '$number';
-    }
-    return trimmed;
-  }
-
-  List<_EpisodeRoute> _extractRoutes(List<Episode> episodes) {
-    if (episodes.isEmpty) return const [];
-    final grouped = <String, List<_RouteEntry>>{};
-    for (var i = 0; i < episodes.length; i++) {
-      final episode = episodes[i];
-      final sep = episode.title.indexOf(' · ');
-      if (sep <= 0) return const [];
-      final route = episode.title.substring(0, sep).trim();
-      final label = episode.title.substring(sep + 3).trim();
-      if (route.isEmpty) return const [];
-      (grouped[route] ??= []).add((
-        episode: episode,
-        index: i,
-        label: label,
-      ));
-    }
-    if (grouped.length < 2) return const [];
-    return [
-      for (final entry in grouped.entries)
-        (name: entry.key, entries: entry.value),
-    ];
-  }
-
-  _EpisodeScope _resolveEpisodeScope(DramaDetails details) {
-    final routes = _extractRoutes(details.episodes);
-    if (routes.length < 2) {
-      return (
-        routes: const [],
-        routeName: '',
-        entries: [
-          for (final (offset, episode) in details.groupEpisodes.indexed)
-            (
-              episode: episode,
-              index: details.group * episodeGroupSize + offset,
-              label: _compactEpisodeLabel(episode.title, episode.number),
-            ),
-        ],
-        groupCount: details.groupCount,
-        group: details.group,
+  EpisodeScope _resolveEpisodeScope(DramaDetails details) =>
+      resolveDetailEpisodeScope(
+        details,
+        routeDramaId: _routeDramaId,
+        selectedRoute: _selectedRoute,
+        routeGroup: _routeGroup,
       );
-    }
-    var routeName = _selectedRoute;
-    var routeGroup = _routeGroup;
-    if (_routeDramaId != details.drama.id ||
-        !routes.any((route) => route.name == routeName)) {
-      final current = details.currentIndex;
-      final matched = current == null
-          ? null
-          : routes
-                .where(
-                  (route) => route.entries.any((item) => item.index == current),
-                )
-                .firstOrNull;
-      final chosen = matched ?? routes.first;
-      routeName = chosen.name;
-      if (current != null) {
-        final pos = chosen.entries.indexWhere((item) => item.index == current);
-        routeGroup = pos >= 0 ? pos ~/ episodeGroupSize : 0;
-      } else {
-        routeGroup = 0;
-      }
-    }
-    final active = routes.firstWhere((route) => route.name == routeName);
-    final groupCount = (active.entries.length / episodeGroupSize).ceil();
-    final group = groupCount == 0 ? 0 : routeGroup.clamp(0, groupCount - 1);
-    final slice = active.entries
-        .skip(group * episodeGroupSize)
-        .take(episodeGroupSize);
-    return (
-      routes: routes,
-      routeName: active.name,
-      entries: [
-        for (final item in slice)
-          (
-            episode: item.episode,
-            index: item.index,
-            label: _compactEpisodeLabel(item.label, item.episode.number),
-          ),
-      ],
-      groupCount: groupCount,
-      group: group,
-    );
-  }
 
-  void _selectRoute(_EpisodeRoute route, int? currentIndex) {
+  void _selectRoute(EpisodeRoute route, int? currentIndex) {
     final pos = currentIndex == null
         ? -1
         : route.entries.indexWhere((item) => item.index == currentIndex);
@@ -1434,7 +1207,7 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
-  void _selectGroup(DramaDetails details, _EpisodeScope scope, int group) {
+  void _selectGroup(DramaDetails details, EpisodeScope scope, int group) {
     if (scope.routes.length > 1) {
       if (group == scope.group || group < 0 || group >= scope.groupCount) {
         return;
@@ -1451,7 +1224,7 @@ class _DetailPageState extends State<DetailPage> {
 
   String _scopeGroupLabel(
     DramaDetails details,
-    _EpisodeScope scope,
+    EpisodeScope scope,
     int group,
   ) {
     if (scope.routes.length < 2) {
@@ -1466,8 +1239,8 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   Widget _routeChip(
-    _Metrics m,
-    _EpisodeRoute route, {
+    DetailMetrics m,
+    EpisodeRoute route, {
     required bool selected,
     required int? currentIndex,
   }) => _GroupChip(
@@ -1479,8 +1252,8 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _episodeTitle(
     DramaDetails details,
-    _Metrics m, {
-    _EpisodeScope? scope,
+    DetailMetrics m, {
+    EpisodeScope? scope,
   }) {
     final current = details.currentIndex;
     final activeRoute = scope != null && scope.routes.length > 1
@@ -1518,8 +1291,8 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _episodeHeader(
     DramaDetails details,
-    _Metrics m, {
-    _EpisodeScope? scope,
+    DetailMetrics m, {
+    EpisodeScope? scope,
   }) => Row(
     children: [
       Expanded(
@@ -1536,7 +1309,7 @@ class _DetailPageState extends State<DetailPage> {
     ],
   );
 
-  Widget _seasonRow(DramaDetails details, _Metrics m) => SeasonStrip(
+  Widget _seasonRow(DramaDetails details, DetailMetrics m) => SeasonStrip(
     seasons: details.seasons,
     current: details.drama.id,
     store: widget.store,
@@ -1558,9 +1331,9 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _groupChip(
     DramaDetails details,
-    _Metrics m,
+    DetailMetrics m,
     int group, {
-    _EpisodeScope? scope,
+    EpisodeScope? scope,
   }) => _GroupChip(
     key: _groupKey(group),
     label: scope == null
@@ -1579,8 +1352,8 @@ class _DetailPageState extends State<DetailPage> {
 
   Widget _swipeGroups(
     DramaDetails details,
-    _Metrics m, {
-    _EpisodeScope? scope,
+    DetailMetrics m, {
+    EpisodeScope? scope,
   }) {
     return SwipeSwitch(
       index: scope?.group ?? details.group,
@@ -1604,7 +1377,7 @@ class _DetailPageState extends State<DetailPage> {
     return _groupKeys[group];
   }
 
-  void _swipeTo(DramaDetails details, int group, {_EpisodeScope? scope}) {
+  void _swipeTo(DramaDetails details, int group, {EpisodeScope? scope}) {
     if (scope != null) {
       _selectGroup(details, scope, group);
     } else {
@@ -1630,7 +1403,7 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
-  Widget _grid(DramaDetails details, _Metrics m, {_EpisodeScope? scope}) {
+  Widget _grid(DramaDetails details, DetailMetrics m, {EpisodeScope? scope}) {
     final current = details.currentIndex;
     final entries =
         scope?.entries ??
@@ -1639,7 +1412,7 @@ class _DetailPageState extends State<DetailPage> {
             (
               episode: episode,
               index: details.group * episodeGroupSize + offset,
-              label: _compactEpisodeLabel(episode.title, episode.number),
+              label: compactEpisodeLabel(episode.title, episode.number),
             ),
         ];
     final descriptive = entries.any(
@@ -1729,7 +1502,7 @@ class _GroupChip extends StatelessWidget {
   });
   final String label;
   final bool selected;
-  final _Metrics metrics;
+  final DetailMetrics metrics;
   final VoidCallback onPressed;
 
   @override
@@ -1787,7 +1560,7 @@ class _EpisodeCell extends StatelessWidget {
   final Episode episode;
   final String label;
   final bool descriptive;
-  final _Metrics metrics;
+  final DetailMetrics metrics;
   final bool current;
   final bool watched;
   final VoidCallback onPressed;

@@ -156,7 +156,7 @@ class PlaybackPreferences {
   final bool backgroundPlayback;
   final VideoFit videoFit;
 
-  bool preopens({required bool television}) => preopen ?? !television;
+  bool preopens({required bool television}) => preopen ?? false;
 
   PlaybackPreferences copyWith({
     double? speed,
