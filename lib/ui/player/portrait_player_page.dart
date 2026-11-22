@@ -662,6 +662,35 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
     );
   }
 
+  Widget _centerCircleButton({
+    required IconData icon,
+    required double size,
+    required double iconSize,
+    required String tooltip,
+    required VoidCallback onPressed,
+  }) => Semantics(
+    label: tooltip,
+    button: true,
+    child: Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.black.withValues(alpha: .46),
+        shape: CircleBorder(
+          side: BorderSide(color: Colors.white.withValues(alpha: .14)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Icon(icon, size: iconSize, color: Colors.white),
+          ),
+        ),
+      ),
+    ),
+  );
+
   Widget _controls(BuildContext context) {
     final session = _session;
     final live = MediaQuery.paddingOf(context);
@@ -691,30 +720,53 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
             ),
           ),
         ),
-        Center(
-          child: IgnorePointer(
-            child: AnimatedOpacity(
-              opacity: session.ready && session.paused ? 1 : 0,
-              duration: Motion.of(context, Motion.short),
-              curve: Motion.standard,
-              child: AnimatedScale(
-                scale: session.ready && session.paused ? 1 : .8,
-                duration: Motion.of(context, Motion.short),
-                curve: Motion.enter,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: .35),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.play_arrow_rounded,
-                    size: 44,
-                    color: Colors.white.withValues(alpha: .9),
-                  ),
+        _chrome(
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 24,
+              children: [
+                _centerCircleButton(
+                  icon: Icons.replay_10_rounded,
+                  size: 46,
+                  iconSize: 24,
+                  tooltip: '快退 10 秒',
+                  onPressed: () {
+                    final duration = session.player.state.duration;
+                    if (!session.ready || duration <= Duration.zero) return;
+                    final target = (session.player.state.position.inMilliseconds - 10000)
+                        .clamp(0, duration.inMilliseconds);
+                    unawaited(session.seekTo(Duration(milliseconds: target)));
+                    setState(_wake);
+                  },
                 ),
-              ),
+                _centerCircleButton(
+                  icon: session.paused
+                      ? Icons.play_arrow_rounded
+                      : Icons.pause_rounded,
+                  size: 66,
+                  iconSize: 38,
+                  tooltip: session.paused ? '播放' : '暂停',
+                  onPressed: () {
+                    session.togglePlayback();
+                    setState(_wake);
+                  },
+                ),
+                _centerCircleButton(
+                  icon: Icons.forward_10_rounded,
+                  size: 46,
+                  iconSize: 24,
+                  tooltip: '快进 10 秒',
+                  onPressed: () {
+                    final duration = session.player.state.duration;
+                    if (!session.ready || duration <= Duration.zero) return;
+                    final target = (session.player.state.position.inMilliseconds + 10000)
+                        .clamp(0, duration.inMilliseconds);
+                    unawaited(session.seekTo(Duration(milliseconds: target)));
+                    setState(_wake);
+                  },
+                ),
+              ],
             ),
           ),
         ),

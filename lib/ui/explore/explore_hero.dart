@@ -267,6 +267,127 @@ class ExploreHero extends StatelessWidget {
         ),
       ],
     );
+    if (AppScope.formFactorOf(context) == FormFactor.phone) {
+      return Semantics(
+        container: true,
+        label: kicker,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(metrics.radius),
+              child: SizedBox(
+                height: 204,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    DramaCover(
+                      drama: drama,
+                      radius: metrics.radius,
+                      details: false,
+                      exploreBlur: true,
+                    ),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [0.25, 0.7, 1],
+                          colors: [
+                            Color(0x000A0A0C),
+                            Color(0x880A0A0C),
+                            Color(0xE60A0A0C),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: InkWell(onTap: onDetail),
+                      ),
+                    ),
+                    Positioned(
+                      left: 16,
+                      right: 16,
+                      bottom: 14,
+                      child: IgnorePointer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 4,
+                          children: [
+                            Text(
+                              drama.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '$kicker · $meta',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Colors.white.withValues(alpha: 0.78),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    IgnorePointer(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(metrics.radius),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: AppTheme.brandGradient,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: FilledButton.icon(
+                onPressed: onPlay,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(48),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded, size: 22),
+                label: Text(action),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final card = ClipRRect(
       borderRadius: BorderRadius.circular(metrics.radius),
       child: SizedBox(

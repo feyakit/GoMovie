@@ -201,7 +201,7 @@ class _SwipeControlsState extends State<SwipeControls> {
           child: _seekFrom != null
               ? _badge(_seekLabel())
               : level != null && value != null
-              ? _badge(_levelBar(level, value))
+              ? _sideLevelBar(level, value)
               : episodeLabel != null
               ? _badge(
                   Text(
@@ -225,8 +225,9 @@ class _SwipeControlsState extends State<SwipeControls> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: .5),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.black.withValues(alpha: .55),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: .12)),
         ),
         child: child,
       ),
@@ -251,29 +252,66 @@ class _SwipeControlsState extends State<SwipeControls> {
     ),
   );
 
-  Widget _levelBar(_Level level, double value) => Row(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 10,
-    children: [
-      Icon(
-        level == _Level.brightness
-            ? Icons.brightness_6_rounded
-            : value == 0
-            ? Icons.volume_off_rounded
-            : Icons.volume_up_rounded,
-        size: 22,
-        color: Colors.white,
-      ),
-      SizedBox(
-        width: 120,
-        child: LinearProgressIndicator(
-          value: value,
-          minHeight: 4,
-          borderRadius: BorderRadius.circular(2),
-          color: Colors.white,
-          backgroundColor: Colors.white.withValues(alpha: .25),
+  Widget _sideLevelBar(_Level level, double value) {
+    final isBrightness = level == _Level.brightness;
+    final clamped = value.clamp(0.0, 1.0);
+    final icon = isBrightness
+        ? Icons.wb_sunny_rounded
+        : clamped == 0
+        ? Icons.volume_off_rounded
+        : Icons.volume_up_rounded;
+    return IgnorePointer(
+      child: Align(
+        alignment: Alignment(isBrightness ? -.82 : .82, 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          spacing: 8,
+          children: [
+            Container(
+              width: 42,
+              height: 142,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: .58),
+                borderRadius: BorderRadius.circular(21),
+                border: Border.all(color: Colors.white.withValues(alpha: .14)),
+              ),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  FractionallySizedBox(
+                    heightFactor: clamped,
+                    widthFactor: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: .88),
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Icon(
+                      icon,
+                      size: 18,
+                      color: clamped > 0.22 ? Colors.black87 : Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '${isBrightness ? '亮度' : '音量'} ${(clamped * 100).round()}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+              ),
+            ),
+          ],
         ),
       ),
-    ],
-  );
+    );
+  }
 }

@@ -609,9 +609,30 @@ class _DetailPageState extends State<DetailPage> {
                           padding: const EdgeInsets.only(top: 10),
                           child: _enter(2, tags),
                         ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: Row(
+                          spacing: 12,
+                          children: [
+                            Expanded(child: _playButton(details, m)),
+                            if (_canDownload)
+                              FocusRing(
+                                radius: m.button / 2,
+                                child: IconButton.filledTonal(
+                                  tooltip: '下载选集',
+                                  onPressed: _ready ? _download : null,
+                                  style: IconButton.styleFrom(
+                                    minimumSize: Size.square(m.button),
+                                  ),
+                                  icon: const Icon(Icons.download_rounded),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                       if (drama.description.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 12),
+                          padding: const EdgeInsets.only(top: 16),
                           child: _enter(3, _description(drama, m)),
                         ),
                       if (details.warning.isNotEmpty)
@@ -695,33 +716,6 @@ class _DetailPageState extends State<DetailPage> {
               ),
             ],
           ],
-        ),
-      ),
-      bottomNavigationBar: Material(
-        color: Theme.of(context).colorScheme.surfaceContainerLow,
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            child: Row(
-              spacing: 12,
-              children: [
-                if (_canDownload)
-                  FocusRing(
-                    radius: m.button / 2,
-                    child: IconButton.filledTonal(
-                      tooltip: '下载选集',
-                      onPressed: _ready ? _download : null,
-                      style: IconButton.styleFrom(
-                        minimumSize: Size.square(m.button),
-                      ),
-                      icon: const Icon(Icons.download_rounded),
-                    ),
-                  ),
-                Expanded(child: _playButton(details, m)),
-              ],
-            ),
-          ),
         ),
       ),
     );
