@@ -780,6 +780,12 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
         ),
         FadePresence(
           duration: Motion.medium,
+          child: (session.loading || (!session.ready && session.error == null))
+              ? PlaybackLoading(session: session)
+              : null,
+        ),
+        FadePresence(
+          duration: Motion.medium,
           child: switch (session.error) {
             final error? => PlaybackFailure(session: session, error: error),
             null => null,

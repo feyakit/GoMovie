@@ -469,7 +469,8 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
             if (_session.saveWarning case final warning?) _saveWarning(warning),
             FadePresence(
               duration: Motion.medium,
-              child: _session.loading
+              child: (_session.loading ||
+                      (!_session.ready && _session.error == null))
                   ? PlaybackLoading(session: _session)
                   : null,
             ),
