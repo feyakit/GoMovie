@@ -56,6 +56,9 @@ class ExploreHero extends StatelessWidget {
     required this.onPlay,
     required this.onDetail,
     this.progress,
+    this.carousel = const [],
+    this.onPlayItem,
+    this.onDetailItem,
   });
   final Drama drama;
   final String kicker;
@@ -64,6 +67,9 @@ class ExploreHero extends StatelessWidget {
   final VoidCallback onPlay;
   final VoidCallback onDetail;
   final double? progress;
+  final List<Drama> carousel;
+  final ValueChanged<Drama>? onPlayItem;
+  final ValueChanged<Drama>? onDetailItem;
 
   _HeroMetrics _metrics(BuildContext context) =>
       switch (AppScope.formFactorOf(context)) {
@@ -268,193 +274,14 @@ class ExploreHero extends StatelessWidget {
       ],
     );
     if (AppScope.formFactorOf(context) == FormFactor.phone) {
-      return Semantics(
-        container: true,
-        label: kicker,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(metrics.radius),
-              child: SizedBox(
-                height: 212,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ColoredBox(color: _shade.withValues(alpha: 0.92)),
-                    CoverBackdrop(
-                      drama: drama,
-                      sigma: 32,
-                      overlay: LinearGradient(
-                        stops: const [0, 0.55, 1],
-                        colors: [
-                          _shade.withValues(alpha: 0.94),
-                          _shade.withValues(alpha: 0.68),
-                          _shade.withValues(alpha: 0.3),
-                        ],
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: InkWell(onTap: onDetail),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        spacing: 16,
-                        children: [
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x66000000),
-                                  blurRadius: 18,
-                                  offset: Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: SizedBox(
-                              width: 120,
-                              height: 180,
-                              child: DramaCover(
-                                drama: drama,
-                                radius: 14,
-                                details: false,
-                                exploreBlur: true,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: IgnorePointer(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                spacing: 8,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.4),
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.14),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      spacing: 6,
-                                      children: [
-                                        const DecoratedBox(
-                                          decoration: BoxDecoration(
-                                            gradient: AppTheme.brandGradient,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: SizedBox(width: 6, height: 6),
-                                        ),
-                                        Text(
-                                          kicker,
-                                          style: TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white.withValues(alpha: 0.92),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    drama.title,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      height: 1.25,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    meta,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      height: 1.35,
-                                      color: Colors.white.withValues(alpha: 0.78),
-                                    ),
-                                  ),
-                                  if (progress case final progress?)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 2),
-                                      child: LinearProgressIndicator(
-                                        value: progress.clamp(0.0, 1.0),
-                                        minHeight: 4,
-                                        color: colors.primaryFixedDim,
-                                        backgroundColor: Colors.white.withValues(alpha: 0.25),
-                                        borderRadius: BorderRadius.circular(2),
-                                        stopIndicatorColor: Colors.transparent,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(metrics.radius),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: AppTheme.brandGradient,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: FilledButton.icon(
-                onPressed: onPlay,
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(48),
-                  textStyle: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                icon: const Icon(Icons.play_arrow_rounded, size: 22),
-                label: Text(action),
-              ),
-            ),
-          ],
-        ),
+      final items = carousel.isNotEmpty ? carousel : [drama];
+      return _PhoneCarouselHero(
+        items: items,
+        kicker: kicker,
+        fallbackMeta: meta,
+        action: action,
+        onPlay: onPlayItem ?? (_) => onPlay(),
+        onDetail: onDetailItem ?? (_) => onDetail(),
       );
     }
     final card = ClipRRect(
@@ -541,6 +368,252 @@ class ExploreHero extends StatelessWidget {
       container: true,
       label: kicker,
       child: card,
+    );
+  }
+}
+
+class _PhoneCarouselHero extends StatefulWidget {
+  const _PhoneCarouselHero({
+    required this.items,
+    required this.kicker,
+    required this.fallbackMeta,
+    required this.action,
+    required this.onPlay,
+    required this.onDetail,
+  });
+
+  final List<Drama> items;
+  final String kicker;
+  final String fallbackMeta;
+  final String action;
+  final ValueChanged<Drama> onPlay;
+  final ValueChanged<Drama> onDetail;
+
+  @override
+  State<_PhoneCarouselHero> createState() => _PhoneCarouselHeroState();
+}
+
+class _PhoneCarouselHeroState extends State<_PhoneCarouselHero> {
+  late final PageController _controller = PageController(
+    viewportFraction: 0.56,
+  );
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _metaFor(Drama drama) {
+    final parts = [
+      if (drama.category.isNotEmpty) drama.category,
+      if (drama.episodes > 0) '共 ${drama.episodes} 集',
+      if (drama.score.isNotEmpty) '★ ${drama.score}',
+    ];
+    return parts.isEmpty ? widget.fallbackMeta : parts.join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final items = widget.items;
+    final currentIndex = _page.clamp(0, items.length - 1);
+    final active = items[currentIndex];
+    final theme = Theme.of(context);
+    final surface = theme.colorScheme.surface;
+    return Semantics(
+      container: true,
+      label: widget.kicker,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              height: 288,
+              decoration: BoxDecoration(
+                color: _shade,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 350),
+                    child: CoverBackdrop(
+                      key: ValueKey(active.id),
+                      drama: active,
+                      sigma: 36,
+                      opacity: 0.72,
+                      overlay: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: const [0, 0.55, 1],
+                        colors: [
+                          surface.withValues(alpha: 0.18),
+                          _shade.withValues(alpha: 0.65),
+                          _shade.withValues(alpha: 0.96),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Column(
+                    children: [
+                      const SizedBox(height: 14),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _controller,
+                          itemCount: items.length,
+                          onPageChanged: (index) =>
+                              setState(() => _page = index),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            return AnimatedBuilder(
+                              animation: _controller,
+                              builder: (context, child) {
+                                final page = _controller.hasClients &&
+                                        _controller.position.haveDimensions
+                                    ? (_controller.page ?? currentIndex.toDouble())
+                                    : currentIndex.toDouble();
+                                final dist = (page - index).abs().clamp(0.0, 1.0);
+                                final scale = 1.0 - dist * 0.14;
+                                final opacity = 1.0 - dist * 0.42;
+                                return Center(
+                                  child: Opacity(
+                                    opacity: opacity,
+                                    child: Transform.scale(
+                                      scale: scale,
+                                      child: child,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: GestureDetector(
+                                onTap: () => widget.onDetail(item),
+                                child: AspectRatio(
+                                  aspectRatio: 2 / 3,
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x80000000),
+                                          blurRadius: 20,
+                                          offset: Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: DramaCover(
+                                      drama: item,
+                                      radius: 16,
+                                      details: false,
+                                      exploreBlur: true,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: 3,
+                          children: [
+                            Text(
+                              active.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '${widget.kicker} · ${_metaFor(active)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white.withValues(alpha: 0.76),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      if (items.length > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            spacing: 6,
+                            children: [
+                              for (var i = 0; i < items.length; i++)
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  width: i == currentIndex ? 18 : 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(999),
+                                    gradient: i == currentIndex
+                                        ? AppTheme.brandGradient
+                                        : null,
+                                    color: i == currentIndex
+                                        ? null
+                                        : Colors.white.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 12),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: AppTheme.brandGradient,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: FilledButton.icon(
+              onPressed: () => widget.onPlay(active),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                textStyle: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              icon: const Icon(Icons.play_arrow_rounded, size: 22),
+              label: Text(widget.action),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

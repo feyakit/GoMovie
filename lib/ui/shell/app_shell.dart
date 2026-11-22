@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -305,32 +306,15 @@ class _AppShellState extends State<AppShell> {
       },
       child: switch (AppScope.formFactorOf(context)) {
         FormFactor.phone => Scaffold(
+          extendBody: true,
           body: pages,
           bottomNavigationBar: covered
               ? null
-              : DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outlineVariant.withValues(alpha: 0.45),
-                      ),
-                    ),
-                  ),
-                  child: NavigationBar(
-                    selectedIndex: tabs.indexOf(_tab),
-                    onDestinationSelected: (index) => _tap(tabs[index]),
-                    destinations: [
-                      for (final tab in tabs)
-                        NavigationDestination(
-                          key: ValueKey('nav-${tab.name}'),
-                          icon: _badged(tab, Icon(tab.icon)),
-                          selectedIcon: _badged(tab, Icon(tab.selectedIcon)),
-                          label: tab.label,
-                        ),
-                    ],
-                  ),
+              : _FloatingGlassDock(
+                  tabs: tabs,
+                  selected: _tab,
+                  badged: _badged,
+                  onSelect: _tap,
                 ),
         ),
         FormFactor.pad || FormFactor.window => _wide(pages),
@@ -848,6 +832,128 @@ class _TelevisionTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 18),
             alignment: Alignment.center,
             child: Text(tab.label),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FloatingGlassDock extends StatelessWidget {
+  const _FloatingGlassDock({
+    required this.tabs,
+    required this.selected,
+    required this.badged,
+    required this.onSelect,
+  });
+
+  final List<AppTab> tabs;
+  final AppTab selected;
+  final Widget Function(AppTab tab, Widget icon) badged;
+  final ValueChanged<AppTab> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    final duration = Motion.of(context, Motion.medium);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18, 0, 18, bottom > 0 ? bottom + 6 : 14),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: dark ? 0.55 : 0.14),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              height: 62,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              decoration: BoxDecoration(
+                color: dark
+                    ? const Color(0xCC141418)
+                    : const Color(0xE6F7F7FA),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: dark
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.black.withValues(alpha: 0.08),
+                ),
+              ),
+              child: Row(
+                children: [
+                  for (final tab in tabs)
+                    Expanded(
+                      child: Semantics(
+                        selected: tab == selected,
+                        button: true,
+                        label: tab.label,
+                        child: InkWell(
+                          key: ValueKey('nav-${tab.name}'),
+                          borderRadius: BorderRadius.circular(22),
+                          onTap: () => onSelect(tab),
+                          child: AnimatedContainer(
+                            duration: duration,
+                            curve: Motion.standard,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(22),
+                              color: tab == selected
+                                  ? colors.primary.withValues(alpha: 0.16)
+                                  : Colors.transparent,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              spacing: 2,
+                              children: [
+                                AnimatedScale(
+                                  scale: tab == selected ? 1.08 : 0.96,
+                                  duration: duration,
+                                  curve: Motion.enter,
+                                  child: badged(
+                                    tab,
+                                    Icon(
+                                      tab == selected
+                                          ? tab.selectedIcon
+                                          : tab.icon,
+                                      size: 21,
+                                      color: tab == selected
+                                          ? colors.primary
+                                          : colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  tab.label,
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: tab == selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    color: tab == selected
+                                        ? colors.onSurface
+                                        : colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

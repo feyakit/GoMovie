@@ -75,35 +75,40 @@ class PlayerStreakBadge extends StatelessWidget {
     final forward = streak > 0;
     return IgnorePointer(
       child: Align(
-        alignment: Alignment(forward ? .75 : -.75, 0),
+        alignment: forward ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
-          height: 40,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          width: 156,
+          height: 220,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: .55),
-            borderRadius: BorderRadius.circular(20),
+            color: Colors.white.withValues(alpha: .14),
+            borderRadius: forward
+                ? const BorderRadius.horizontal(left: Radius.circular(110))
+                : const BorderRadius.horizontal(right: Radius.circular(110)),
             border: Border.all(color: Colors.white.withValues(alpha: .12)),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            spacing: 6,
-            children: [
-              Icon(
-                forward
-                    ? Icons.fast_forward_rounded
-                    : Icons.fast_rewind_rounded,
-                size: 20,
-                color: Colors.white,
-              ),
-              Text(
-                '${forward ? '快进' : '快退'} ${streak.abs() * 10} 秒',
-                style: const TextStyle(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 6,
+              children: [
+                Icon(
+                  forward
+                      ? Icons.fast_forward_rounded
+                      : Icons.fast_rewind_rounded,
+                  size: 32,
                   color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
                 ),
-              ),
-            ],
+                Text(
+                  '${forward ? '+' : '-'}${streak.abs() * 10} 秒',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

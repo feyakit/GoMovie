@@ -1635,6 +1635,12 @@ class _EpisodeCell extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (current)
+                  Positioned(
+                    left: 6,
+                    bottom: 6,
+                    child: _NowPlayingBars(color: colors.primary),
+                  ),
                 if (episode.vip)
                   Positioned(
                     right: 5,
@@ -1655,6 +1661,53 @@ class _EpisodeCell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NowPlayingBars extends StatefulWidget {
+  const _NowPlayingBars({required this.color});
+  final Color color;
+
+  @override
+  State<_NowPlayingBars> createState() => _NowPlayingBarsState();
+}
+
+class _NowPlayingBarsState extends State<_NowPlayingBars>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _controller,
+    builder: (context, _) {
+      final t = _controller.value * math.pi * 2;
+      double h(double phase) => 4 + 6 * (0.5 + 0.5 * math.sin(t + phase));
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        spacing: 2,
+        children: [
+          for (final phase in const [0.0, 1.8, 3.4])
+            Container(
+              width: 2.5,
+              height: h(phase),
+              decoration: BoxDecoration(
+                color: widget.color,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+        ],
+      );
+    },
+  );
 }
 
 class _DescriptionDialog extends StatefulWidget {

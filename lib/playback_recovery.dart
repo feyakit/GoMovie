@@ -3,7 +3,7 @@ import 'models.dart';
 enum PlaybackRecoveryAction { alternative, refresh, stop }
 
 class PlaybackRecovery {
-  static const maxAttempts = 3;
+  static const maxAttempts = 4;
   int _attempts = 0;
   bool _refreshed = false;
 
@@ -30,7 +30,7 @@ class PlaybackRecovery {
 }
 
 class PlaybackHealth {
-  static const stallTimeout = Duration(seconds: 20);
+  static const stallTimeout = Duration(seconds: 10);
   Duration? _position;
   DateTime? _lastProgress;
 

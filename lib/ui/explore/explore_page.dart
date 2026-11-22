@@ -590,9 +590,14 @@ class ExplorePageState extends State<ExplorePage> {
     final featured = explore.featured ??
         (phone && explore.recommending ? explore.feed?.items.firstOrNull : null);
     if (featured case final drama?) {
+      final feedItems = explore.feed?.items ?? const <Drama>[];
+      final carousel = phone && feedItems.length > 1
+          ? feedItems.take(5).toList()
+          : const <Drama>[];
       return ExploreHero(
         key: ValueKey(('featured', drama.id)),
         drama: drama,
+        carousel: carousel,
         kicker: '今日推荐',
         meta: [
           if (drama.category.isNotEmpty) drama.category,
@@ -601,6 +606,8 @@ class ExplorePageState extends State<ExplorePage> {
         action: '立即观看',
         onPlay: () => _open(drama, autoplay: true),
         onDetail: () => _open(drama),
+        onPlayItem: (item) => _open(item, autoplay: true),
+        onDetailItem: (item) => _open(item),
       );
     }
     return null;
