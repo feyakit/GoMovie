@@ -291,7 +291,7 @@ class _PlaybackPageState extends State<PlaybackPage> {
       FormFactor.phone => PortraitPlayerPage(
         store: widget.store,
         handle: widget.handle,
-        onFullscreen: _wideVideo
+        onFullscreen: (!_session.aspectKnown || _wideVideo)
             ? () => unawaited(
                 AppDevice.setPlayerOrientation(PlayerOrientation.landscape),
               )
