@@ -5,6 +5,8 @@ import '../app_scope.dart';
 import '../widgets/group_card.dart';
 import 'settings_rows.dart';
 
+const themeModes = {'system': '自动（跟随系统）', 'light': '浅色', 'dark': '深色'};
+
 const displayModes = {
   'auto': '自动识别设备',
   'television': '电视',
@@ -33,6 +35,25 @@ class AppearanceSettings extends StatelessWidget {
       children: [
         GroupCard(
           children: [
+            SettingsTile(
+              title: '主题模式',
+              subtitle: themeModes[store.themeMode] ?? themeModes['system']!,
+              onTap: () async {
+                final selection = await showOptionDialog(
+                  context,
+                  title: '主题模式',
+                  options: themeModes,
+                  selected: store.themeMode,
+                );
+                if (selection != null && context.mounted) {
+                  await saveSetting(
+                    context,
+                    () => store.setThemeMode(selection),
+                  );
+                }
+              },
+            ),
+            const Divider(indent: 16, endIndent: 16),
             if (!television)
               SwitchTile(
                 title: '在主页底栏显示历史',

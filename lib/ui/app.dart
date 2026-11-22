@@ -274,9 +274,9 @@ class _GoMovieAppState extends State<GoMovieApp> with WidgetsBindingObserver {
       locale: const Locale('zh', 'CN'),
       supportedLocales: const [Locale('zh', 'CN')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      theme: _themes.$2,
+      theme: _themes.$1,
       darkTheme: _themes.$2,
-      themeMode: ThemeMode.dark,
+      themeMode: AppTheme.mode(store?.themeMode ?? 'dark'),
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
         value: AppTheme.systemBars(Theme.of(context).brightness),
         child: Focus(

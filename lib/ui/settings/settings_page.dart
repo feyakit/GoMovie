@@ -142,8 +142,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final store = widget.store;
     final scope = AppScope.of(context);
     return switch (group) {
-      SettingsGroup.appearance =>
-        displayModes[platformDisplayMode(store.displayMode)] ?? '自动识别设备',
+      SettingsGroup.appearance => [
+        themeModes[store.themeMode] ?? themeModes['system'],
+        displayModes[platformDisplayMode(store.displayMode)],
+      ].join(' · '),
       SettingsGroup.playback => '倍速、清晰度、解码与弹幕',
       SettingsGroup.download =>
         Platform.isAndroid ? '下载目录、画质、并发、清理缓存与自动导出' : '下载目录、画质、并发与清理缓存',
