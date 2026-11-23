@@ -5,12 +5,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../models.dart';
+import '../detail/detail_routes.dart';
 import '../theme/motion.dart';
 import '../widgets/cover_image.dart';
 
 const _cellHeight = 48.0;
+const _descriptiveCellHeight = 52.0;
 const _cellGap = 8.0;
-const _rowExtent = _cellHeight + _cellGap;
 const _listTop = 14.0;
 
 class EpisodeGrid extends StatefulWidget {
@@ -49,6 +50,7 @@ class EpisodeGrid extends StatefulWidget {
 class _EpisodeGridState extends State<EpisodeGrid> {
   final _scroll = ScrollController();
   final _headerKey = GlobalKey();
+  final _routeBarKey = GlobalKey();
   bool? _dragAdds;
   int _dragAnchor = 0;
   Set<int> _dragBase = const {};
@@ -57,17 +59,60 @@ class _EpisodeGridState extends State<EpisodeGrid> {
   double _gridWidth = 0;
   double _gridHeight = 0;
   int _columns = 5;
+  double _activeCellHeight = _cellHeight;
   int _revealed = -1;
+  String _selectedRoute = '';
 
   List<Episode> get _episodes => widget.episodes;
   Set<int> get _selected => widget.selected;
   bool _locked(int index) =>
       widget.downloaded.contains(index) || widget.downloading.contains(index);
 
+  (List<EpisodeRoute>, String, List<RouteEntry>) _resolveEntries() {
+    final routes = extractDetailRoutes(_episodes);
+    if (routes.length < 2) {
+      return (
+        const [],
+        '',
+        [
+          for (var i = 0; i < _episodes.length; i++)
+            (
+              episode: _episodes[i],
+              index: i,
+              label: compactEpisodeLabel(_episodes[i].title, _episodes[i].number),
+            ),
+        ],
+      );
+    }
+    var routeName = _selectedRoute;
+    if (!routes.any((r) => r.name == routeName)) {
+      final matched = routes
+          .where((r) => r.entries.any((e) => e.index == widget.current))
+          .firstOrNull;
+      routeName = (matched ?? routes.first).name;
+    }
+    final active = routes.firstWhere((r) => r.name == routeName);
+    return (
+      routes,
+      active.name,
+      [
+        for (final item in active.entries)
+          (
+            episode: item.episode,
+            index: item.index,
+            label: compactEpisodeLabel(item.label, item.episode.number),
+          ),
+      ],
+    );
+  }
+
   @override
   void didUpdateWidget(EpisodeGrid oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!widget.selecting) _dragEnd();
+    if (!identical(oldWidget.episodes, widget.episodes)) {
+      _selectedRoute = '';
+    }
   }
 
   @override
@@ -77,13 +122,19 @@ class _EpisodeGridState extends State<EpisodeGrid> {
     super.dispose();
   }
 
-  double get _top => _listTop + (_headerKey.currentContext?.size?.height ?? 0);
+  double get _top =>
+      _listTop +
+      (_headerKey.currentContext?.size?.height ?? 0) +
+      (_routeBarKey.currentContext?.size?.height ?? 0);
+
+  double get _rowExtent => _activeCellHeight + _cellGap;
 
   double get _cellWidth =>
       (_gridWidth - widget.inset * 2 - _cellGap * (_columns - 1)) / _columns;
 
   int? _hit(Offset point, {bool exact = false}) {
-    if (_episodes.isEmpty || !_scroll.hasClients) return null;
+    final (_, _, entries) = _resolveEntries();
+    if (entries.isEmpty || !_scroll.hasClients) return null;
     final pitch = _cellWidth + _cellGap;
     final x = point.dx - widget.inset;
     final y = point.dy + _scroll.offset - _top;
@@ -92,15 +143,15 @@ class _EpisodeGridState extends State<EpisodeGrid> {
             y < 0 ||
             x >= pitch * _columns ||
             x % pitch > _cellWidth ||
-            y % _rowExtent > _cellHeight)) {
+            y % _rowExtent > _activeCellHeight)) {
       return null;
     }
-    final rows = (_episodes.length / _columns).ceil();
+    final rows = (entries.length / _columns).ceil();
     final column = (x / pitch).floor().clamp(0, _columns - 1);
     final row = (y / _rowExtent).floor().clamp(0, rows - 1);
-    final index = row * _columns + column;
-    if (index < _episodes.length) return index;
-    return exact ? null : _episodes.length - 1;
+    final pos = row * _columns + column;
+    if (pos < entries.length) return entries[pos].index;
+    return exact ? null : entries.last.index;
   }
 
   void _mark(int index) {
@@ -188,13 +239,17 @@ class _EpisodeGridState extends State<EpisodeGrid> {
 
   void _reveal({required bool animate}) {
     if (!mounted || !_scroll.hasClients || widget.current < 0) return;
-    final top = _top + widget.current ~/ _columns * _rowExtent;
+    final (_, _, entries) = _resolveEntries();
+    final pos = entries.indexWhere((e) => e.index == widget.current);
+    if (pos < 0) return;
+    final top = _top + pos ~/ _columns * _rowExtent;
     final position = _scroll.position;
     final view = position.viewportDimension;
-    if (top >= position.pixels && top + _cellHeight <= position.pixels + view) {
+    if (top >= position.pixels &&
+        top + _activeCellHeight <= position.pixels + view) {
       return;
     }
-    final target = (top - (view - _cellHeight) / 3).clamp(
+    final target = (top - (view - _activeCellHeight) / 3).clamp(
       position.minScrollExtent,
       position.maxScrollExtent,
     );
@@ -216,7 +271,14 @@ class _EpisodeGridState extends State<EpisodeGrid> {
     builder: (context, constraints) {
       _gridWidth = constraints.maxWidth;
       _gridHeight = constraints.maxHeight;
-      _columns = switch (widget.minCellWidth) {
+      final (routes, routeName, entries) = _resolveEntries();
+      final descriptive = entries.any(
+        (e) => e.label.length > 4 || RegExp(r'[^0-9]').hasMatch(e.label),
+      );
+      _activeCellHeight = descriptive ? _descriptiveCellHeight : _cellHeight;
+      final effectiveMinWidth =
+          widget.minCellWidth ?? (descriptive ? 148.0 : null);
+      _columns = switch (effectiveMinWidth) {
         null => 5,
         final minimum => max(
           1,
@@ -235,7 +297,7 @@ class _EpisodeGridState extends State<EpisodeGrid> {
       final rows = SliverFixedExtentList(
         itemExtent: _rowExtent,
         delegate: SliverChildBuilderDelegate(
-          childCount: (_episodes.length / _columns).ceil(),
+          childCount: (entries.length / _columns).ceil(),
           (context, row) => Padding(
             padding: const EdgeInsets.only(bottom: _cellGap),
             child: Row(
@@ -243,32 +305,38 @@ class _EpisodeGridState extends State<EpisodeGrid> {
               spacing: _cellGap,
               children: [
                 for (
-                  var index = row * _columns;
-                  index < (row + 1) * _columns;
-                  index++
+                  var pos = row * _columns;
+                  pos < (row + 1) * _columns;
+                  pos++
                 )
                   Expanded(
-                    child: index < _episodes.length
-                        ? _EpisodeCell(
-                            episode: _episodes[index],
-                            current: index == widget.current,
-                            watched: index < widget.current,
-                            selected: selecting
-                                ? _selected.contains(index)
-                                : null,
-                            marker: widget.downloaded.contains(index)
-                                ? Icons.check_rounded
-                                : widget.downloading.contains(index)
-                                ? Icons.arrow_downward_rounded
-                                : null,
-                            onPressed: _locked(index)
-                                ? null
-                                : !selecting
-                                ? () => widget.onPick(index)
-                                : widget.touch
-                                ? () => _toggle(index)
-                                : null,
-                          )
+                    child: pos < entries.length
+                        ? () {
+                            final item = entries[pos];
+                            final index = item.index;
+                            return _EpisodeCell(
+                              episode: item.episode,
+                              label: item.label,
+                              descriptive: descriptive,
+                              current: index == widget.current,
+                              watched: index < widget.current,
+                              selected: selecting
+                                  ? _selected.contains(index)
+                                  : null,
+                              marker: widget.downloaded.contains(index)
+                                  ? Icons.check_rounded
+                                  : widget.downloading.contains(index)
+                                  ? Icons.arrow_downward_rounded
+                                  : null,
+                              onPressed: _locked(index)
+                                  ? null
+                                  : !selecting
+                                  ? () => widget.onPick(index)
+                                  : widget.touch
+                                  ? () => _toggle(index)
+                                  : null,
+                            );
+                          }()
                         : const SizedBox.shrink(),
                   ),
               ],
@@ -282,6 +350,38 @@ class _EpisodeGridState extends State<EpisodeGrid> {
           if (widget.header case final header?)
             SliverToBoxAdapter(
               child: KeyedSubtree(key: _headerKey, child: header),
+            ),
+          if (routes.length > 1)
+            SliverToBoxAdapter(
+              child: KeyedSubtree(
+                key: _routeBarKey,
+                child: SizedBox(
+                  height: 42,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.fromLTRB(
+                      widget.inset,
+                      8,
+                      widget.inset,
+                      0,
+                    ),
+                    itemCount: routes.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final route = routes[index];
+                      final selected = route.name == routeName;
+                      return ChoiceChip(
+                        visualDensity: VisualDensity.compact,
+                        label: Text(route.name),
+                        selected: selected,
+                        onSelected: (_) => setState(() {
+                          _selectedRoute = route.name;
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ),
             ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
@@ -326,6 +426,8 @@ class _EpisodeGridState extends State<EpisodeGrid> {
 class _EpisodeCell extends StatelessWidget {
   const _EpisodeCell({
     required this.episode,
+    required this.label,
+    required this.descriptive,
     required this.current,
     required this.watched,
     required this.selected,
@@ -333,6 +435,8 @@ class _EpisodeCell extends StatelessWidget {
     this.marker,
   });
   final Episode episode;
+  final String label;
+  final bool descriptive;
   final bool current;
   final bool watched;
   final bool? selected;
@@ -353,7 +457,7 @@ class _EpisodeCell extends StatelessWidget {
       button: true,
       selected: selected ?? current,
       label:
-          '第 ${episode.number} 集${episode.vip ? '，VIP' : ''}'
+          '$label${episode.vip ? '，VIP' : ''}'
           '${marker == null
               ? ''
               : marker == Icons.check_rounded
@@ -393,26 +497,45 @@ class _EpisodeCell extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  spacing: 4,
-                  children: [
-                    if (current)
-                      Icon(
-                        Icons.equalizer_rounded,
-                        size: 14,
-                        color: foreground,
-                      ),
-                    Text(
-                      '${episode.number}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: current ? FontWeight.w700 : FontWeight.w500,
-                        color: foreground,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: descriptive ? 10 : 4,
+                      vertical: descriptive ? 4 : 2,
                     ),
-                  ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4,
+                      children: [
+                        if (current)
+                          Icon(
+                            Icons.equalizer_rounded,
+                            size: 14,
+                            color: foreground,
+                          ),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: descriptive ? 2 : 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: descriptive ? 12.5 : 15,
+                              height: descriptive ? 1.2 : 1.0,
+                              fontWeight: current
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: foreground,
+                              fontFeatures: descriptive
+                                  ? null
+                                  : const [FontFeature.tabularFigures()],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 if (marker case final marker?)
                   Positioned(

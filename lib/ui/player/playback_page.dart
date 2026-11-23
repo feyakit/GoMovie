@@ -280,8 +280,7 @@ class _PlaybackPageState extends State<PlaybackPage> {
       FormFactor.pad || FormFactor.window => _padPage(context, mini),
       FormFactor.phone
           when !usePortraitFeed &&
-              !(portraitStyle &&
-                  MediaQuery.orientationOf(context) == Orientation.portrait) =>
+              MediaQuery.orientationOf(context) == Orientation.landscape =>
         LandscapePlayerPage(
           store: widget.store,
           handle: widget.handle,
