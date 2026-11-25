@@ -1300,10 +1300,10 @@ class PlaybackFailure extends StatelessWidget {
                       onPressed: session.retry,
                       child: const Text('重试'),
                     ),
-                  ] else if (error.contains('未登录') &&
-                      (error.contains('网盘') ||
-                          error.contains('夸克') ||
-                          session.detail.drama.source == 'quark')) ...[
+                  ] else if (isNetdiskAuthError(
+                    error,
+                    source: session.detail.drama.source,
+                  )) ...[
                     FilledButton.icon(
                       focusNode: retryFocus,
                       onPressed: () async {

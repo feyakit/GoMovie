@@ -13,6 +13,24 @@ import '../player/playback_page.dart';
 import '../shell/app_shell.dart';
 import '../widgets/group_card.dart';
 
+bool isNetdiskAuthError(String error, {String source = ''}) {
+  final lower = error.toLowerCase();
+  final mentionsAuth =
+      error.contains('未登录') ||
+      error.contains('登录态') ||
+      error.contains('重新登录') ||
+      error.contains('登录已失效') ||
+      error.contains('已过期') ||
+      lower.contains('cookie');
+  if (!mentionsAuth) return false;
+  return source == 'quark' ||
+      source == 'uc' ||
+      error.contains('网盘') ||
+      error.contains('夸克') ||
+      lower.contains('quark') ||
+      lower.contains('uc');
+}
+
 /// 网盘频道：扫码登录夸克 → 粘贴分享链接 → 选集播放。
 ///
 /// 说明：分享列表免登录即可解析；播放需要登录态（cookie 只存本机）。

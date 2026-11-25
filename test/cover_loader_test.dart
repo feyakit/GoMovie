@@ -65,4 +65,29 @@ void main() {
     }
     await tester.pump();
   });
+
+  testWidgets('duplicate cover requests share one fetch until all cancel', (
+    tester,
+  ) async {
+    final repository = _CoverRepository();
+    final target = drama('dup');
+    final first = CoverLoader.request(repository, target);
+    final second = CoverLoader.request(repository, target);
+
+    await tester.pump(const Duration(milliseconds: 20));
+    first.cancel();
+    await tester.pump(const Duration(milliseconds: 30));
+
+    expect(repository.started, [_id(0).replaceFirst('0', 'dup')]);
+    repository.pending['hongguo:dup']!.complete('/covers/dup.jpg');
+    expect(await second.file, '/covers/dup.jpg');
+
+    final third = CoverLoader.request(repository, drama('cancel-all'));
+    final fourth = CoverLoader.request(repository, drama('cancel-all'));
+    await tester.pump(const Duration(milliseconds: 20));
+    third.cancel();
+    fourth.cancel();
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(repository.started, isNot(contains('hongguo:cancel-all')));
+  });
 }
