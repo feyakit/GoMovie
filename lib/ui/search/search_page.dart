@@ -577,12 +577,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              inset,
-              8,
-              inset,
-              television ? 27 : 20,
-            ),
+            padding: EdgeInsets.fromLTRB(inset, 8, inset, television ? 27 : 20),
             sliver: DramaSliverGrid(
               width: constraints.maxWidth - inset * 2,
               items: displayed,

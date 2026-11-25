@@ -328,7 +328,9 @@ class _PhoneSearchPill extends StatelessWidget {
       child: Material(
         color: colors.surfaceContainerHigh.withValues(alpha: 0.72),
         shape: StadiumBorder(
-          side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.45)),
+          side: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(

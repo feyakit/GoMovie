@@ -111,10 +111,7 @@ class ExploreFeed extends ChangeNotifier {
     _notify();
   }
 
-  Future<void> _loadFilters(
-    SourceCatalog catalog,
-    CatalogCategory tab,
-  ) async {
+  Future<void> _loadFilters(SourceCatalog catalog, CatalogCategory tab) async {
     final list = await catalog.filters(tab);
     if (_disposed || catalog != _catalog || _tab.id != tab.id) return;
     if (list.isEmpty && _filters.isEmpty) return;
@@ -134,7 +131,11 @@ class ExploreFeed extends ChangeNotifier {
     _select(tab, keepExtend: true, refresh: true);
   }
 
-  void _select(CatalogCategory tab, {bool keepExtend = false, bool refresh = false}) {
+  void _select(
+    CatalogCategory tab, {
+    bool keepExtend = false,
+    bool refresh = false,
+  }) {
     final catalog = _catalog!;
     if (recommending) unawaited(repository.cancelRecommendations());
     _tab = tab;

@@ -326,7 +326,6 @@ class MinePage extends StatelessWidget {
       },
     );
   }
-
 }
 
 class _AllHistoryTile extends StatelessWidget {

@@ -355,8 +355,8 @@ class _DetailPageState extends State<DetailPage> {
       final form = AppScope.formFactorOf(context);
       if (_coverPath.isEmpty) unawaited(_loadCover());
       if (form == FormFactor.television) return _televisionPage(details);
-      final page = (form == FormFactor.phone ||
-              MediaQuery.sizeOf(context).width < 840)
+      final page =
+          (form == FormFactor.phone || MediaQuery.sizeOf(context).width < 840)
           ? _phonePage(details)
           : _widePage(details, desktop: form == FormFactor.window);
       return AccentStage(accent: _accent, cover: _coverPath, child: page);
@@ -843,26 +843,27 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) => DecoratedBox(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(m.coverRadius),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x4D000000),
-          blurRadius: 26,
-          offset: Offset(0, 10),
+  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) =>
+      DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(m.coverRadius),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x4D000000),
+              blurRadius: 26,
+              offset: Offset(0, 10),
+            ),
+          ],
         ),
-      ],
-    ),
-    child: SizedBox.fromSize(
-      size: m.cover,
-      child: DramaCover(
-        drama: drama,
-        radius: m.coverRadius,
-        heroScope: hero ? 'drama' : null,
-      ),
-    ),
-  );
+        child: SizedBox.fromSize(
+          size: m.cover,
+          child: DramaCover(
+            drama: drama,
+            radius: m.coverRadius,
+            heroScope: hero ? 'drama' : null,
+          ),
+        ),
+      );
 
   Widget _headline(
     DramaDetails details,
@@ -940,27 +941,30 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _followingHeadline(DramaDetails details, DetailMetrics m, double top) =>
-      ConstrainedBox(
-        constraints: BoxConstraints(minHeight: m.cover.height - top),
-        child: IntrinsicHeight(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _headline(details, m),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: FollowPill(
-                  store: widget.store,
-                  drama: details.drama,
-                  height: m.follow,
-                ),
-              ),
-            ],
+  Widget _followingHeadline(
+    DramaDetails details,
+    DetailMetrics m,
+    double top,
+  ) => ConstrainedBox(
+    constraints: BoxConstraints(minHeight: m.cover.height - top),
+    child: IntrinsicHeight(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _headline(details, m),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: FollowPill(
+              store: widget.store,
+              drama: details.drama,
+              height: m.follow,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget? _stats(Drama drama, DetailMetrics m) {
     final stats = [
@@ -1255,11 +1259,7 @@ class _DetailPageState extends State<DetailPage> {
     details.selectGroup(group);
   }
 
-  String _scopeGroupLabel(
-    DramaDetails details,
-    EpisodeScope scope,
-    int group,
-  ) {
+  String _scopeGroupLabel(DramaDetails details, EpisodeScope scope, int group) {
     if (scope.routes.length < 2) {
       return details.groupLabel(group);
     }
@@ -1299,9 +1299,8 @@ class _DetailPageState extends State<DetailPage> {
             ),
           )
         : details.episodes.any(
-            (e) => (e.raw['videoUrl'] as String? ?? '').startsWith(
-              'netdisk://',
-            ),
+            (e) =>
+                (e.raw['videoUrl'] as String? ?? '').startsWith('netdisk://'),
           );
     final unit = isNetdisk ? '个文件' : '集';
     final summary = [

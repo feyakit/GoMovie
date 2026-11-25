@@ -469,7 +469,8 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
             if (_session.saveWarning case final warning?) _saveWarning(warning),
             FadePresence(
               duration: Motion.medium,
-              child: (_session.loading ||
+              child:
+                  (_session.loading ||
                       (!_session.ready && _session.error == null))
                   ? PlaybackLoading(session: _session)
                   : null,
@@ -1179,8 +1180,11 @@ class PlaybackLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final message = session.routeNotice ??
-        (session.loadingMessage.isNotEmpty ? session.loadingMessage : '正在缓冲视频…');
+    final message =
+        session.routeNotice ??
+        (session.loadingMessage.isNotEmpty
+            ? session.loadingMessage
+            : '正在缓冲视频…');
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -1337,7 +1341,8 @@ class PlaybackFailure extends StatelessWidget {
                     ),
                   if (!session.localFailure)
                     OutlinedButton.icon(
-                      onPressed: () => openProxySettings(context, session.store),
+                      onPressed: () =>
+                          openProxySettings(context, session.store),
                       icon: const Icon(Icons.language_rounded, size: 18),
                       label: const Text('网络代理'),
                     ),

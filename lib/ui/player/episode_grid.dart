@@ -79,7 +79,10 @@ class _EpisodeGridState extends State<EpisodeGrid> {
             (
               episode: _episodes[i],
               index: i,
-              label: compactEpisodeLabel(_episodes[i].title, _episodes[i].number),
+              label: compactEpisodeLabel(
+                _episodes[i].title,
+                _episodes[i].number,
+              ),
             ),
         ],
       );

@@ -720,11 +720,7 @@ class _SideItem extends StatelessWidget {
                               alwaysIncludeSemantics: true,
                               duration: Motion.of(context, Motion.short),
                               curve: expanded
-                                  ? const Interval(
-                                      0.4,
-                                      1,
-                                      curve: Motion.enter,
-                                    )
+                                  ? const Interval(0.4, 1, curve: Motion.enter)
                                   : Motion.exit,
                               child: AnimatedDefaultTextStyle(
                                 duration: duration,
@@ -880,9 +876,7 @@ class _FloatingGlassDock extends StatelessWidget {
               height: 62,
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               decoration: BoxDecoration(
-                color: dark
-                    ? const Color(0xCC141418)
-                    : const Color(0xE6F7F7FA),
+                color: dark ? const Color(0xCC141418) : const Color(0xE6F7F7FA),
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(
                   color: dark
