@@ -35,8 +35,9 @@ void main() {
     expect(repository.started, isEmpty);
     requests[7]!.cancel();
     await tester.pump(const Duration(milliseconds: 60));
+    // 定时器按创建顺序触发，并发没打满时逐个立即开跑，所以顺序是 0..6。
     expect(repository.started, [
-      for (var index = 6; index >= 0; index--) _id(index),
+      for (var index = 0; index < 7; index++) _id(index),
     ]);
 
     requests[8] = request(8);
