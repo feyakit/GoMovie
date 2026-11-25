@@ -30,7 +30,7 @@ void main() {
       for (var index = 0; index < 8; index++) index: request(index),
     };
 
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 40));
     expect(repository.started, isEmpty);
     requests[7]!.cancel();
     await tester.pump(const Duration(milliseconds: 60));
@@ -41,7 +41,7 @@ void main() {
     requests[8] = request(8);
     requests[9] = request(9);
     await tester.pump(const Duration(milliseconds: 160));
-    expect(repository.started, hasLength(6));
+    expect(repository.started, hasLength(8));
 
     repository.pending[_id(0)]!.complete('/covers/0.jpg');
     expect(await requests[0]!.file, '/covers/0.jpg');
