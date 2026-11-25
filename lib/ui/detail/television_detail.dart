@@ -8,6 +8,7 @@ import '../../drama_details.dart';
 import '../../local_store.dart';
 import '../../models.dart';
 import '../widgets/cover_image.dart';
+import 'detail_routes.dart';
 import 'poster_glow.dart';
 
 const _background = Color(0xFF101015);
@@ -66,7 +67,7 @@ TextStyle _text(
   return (stops, colors);
 }
 
-enum _Row { actions, seasons, ranges, grid }
+enum _Row { actions, seasons, routes, ranges, grid }
 
 class TelevisionDetail extends StatefulWidget {
   const TelevisionDetail({
@@ -95,10 +96,12 @@ class TelevisionDetailState extends State<TelevisionDetail> {
   final _focus = FocusNode();
   final _statusFocus = FocusNode(canRequestFocus: false, skipTraversal: true);
   final _seasonKeys = <GlobalKey>[];
+  final _routeKeys = <GlobalKey>[];
   final _rangeKeys = <GlobalKey>[];
   _Row _row = _Row.actions;
   int _action = 0;
   int? _season;
+  int _route = 0;
   int _range = 0;
   int _top = 0;
   int? _cell;
@@ -108,22 +111,55 @@ class TelevisionDetailState extends State<TelevisionDetail> {
 
   DramaDetails get _details => widget.details;
   List<Episode> get _episodes => _details.episodes;
+  List<EpisodeRoute> get _routes => extractDetailRoutes(_episodes);
+  bool get _routed => _routes.length >= 2;
+  int get _routeIndex => _routed ? _route.clamp(0, _routes.length - 1) : 0;
+
+  List<RouteEntry> get _entries => _routed
+      ? _routes[_routeIndex].entries
+      : [
+          for (final (index, episode) in _episodes.indexed)
+            (
+              episode: episode,
+              index: index,
+              label: compactEpisodeLabel(episode.title, episode.number),
+            ),
+        ];
+
+  bool get _descriptive => _entries.any(
+    (entry) =>
+        entry.label.length > 4 ||
+        isDescriptiveEpisodeLabel(entry.label, entry.episode.number),
+  );
+
+  int get _activeColumns => _descriptive ? 4 : _columns;
   bool get _seasoned => _details.seasons.length > 1;
-  bool get _ranged => _episodes.length > 40;
+  bool get _ranged => _entries.length > (_descriptive ? 16 : 40);
 
   int get _rangeSize {
-    final count = _episodes.length;
+    final count = _entries.length;
+    if (_descriptive) {
+      if (count <= 16) return math.max(count, 1);
+      return 16;
+    }
     if (count <= 40) return math.max(count, 1);
     if (count <= 200) return 20;
     return math.max(100, (count / 1000).ceil() * 100);
   }
 
-  int get _rangeCount => (_episodes.length / _rangeSize).ceil();
+  int get _rangeCount => (_entries.length / _rangeSize).ceil();
   int get _start => _range * _rangeSize;
-  int get _end => math.min(_start + _rangeSize, _episodes.length);
-  int get _rows => ((_end - _start) / _columns).ceil();
+  int get _end => math.min(_start + _rangeSize, _entries.length);
+  int get _rows => ((_end - _start) / _activeColumns).ceil();
   int get _maxTop => math.max(0, _rows - 2);
   int get _actionCount => _details.drama.description.isEmpty ? 2 : 3;
+
+  int? get _currentLocalIndex {
+    final current = _details.currentIndex;
+    if (current == null) return null;
+    final found = _entries.indexWhere((entry) => entry.index == current);
+    return found >= 0 ? found : null;
+  }
 
   int get _seasonIndex =>
       _season ??
@@ -137,8 +173,9 @@ class TelevisionDetailState extends State<TelevisionDetail> {
   List<_Row> get _available => [
     _Row.actions,
     if (_seasoned) _Row.seasons,
+    if (_routed) _Row.routes,
     if (_ranged) _Row.ranges,
-    if (_episodes.isNotEmpty) _Row.grid,
+    if (_entries.isNotEmpty) _Row.grid,
   ];
 
   @override
@@ -158,9 +195,23 @@ class TelevisionDetailState extends State<TelevisionDetail> {
     _locate();
     if (index < 0 || index >= _episodes.length) return;
     _move(() {
+      var local = index;
+      if (_routed) {
+        final routeIndex = _routes.indexWhere(
+          (route) => route.entries.any((entry) => entry.index == index),
+        );
+        if (routeIndex >= 0) {
+          _route = routeIndex;
+          local = _routes[routeIndex].entries.indexWhere(
+            (entry) => entry.index == index,
+          );
+        } else {
+          local = 0;
+        }
+      }
       _row = _Row.grid;
-      _show(index);
-      _cell = index;
+      _show(local);
+      _cell = local;
     });
   }
 
@@ -170,16 +221,35 @@ class TelevisionDetailState extends State<TelevisionDetail> {
     _located = key;
     _cell = null;
     _season = null;
-    _show(_details.currentIndex ?? 0);
+    final current = _details.currentIndex ?? 0;
+    if (_routed) {
+      final routeIndex = _routes.indexWhere(
+        (route) => route.entries.any((entry) => entry.index == current),
+      );
+      _route = routeIndex >= 0 ? routeIndex : 0;
+      final local = _routes[_route].entries.indexWhere(
+        (entry) => entry.index == current,
+      );
+      _show(local >= 0 ? local : 0);
+    } else {
+      _route = 0;
+      _show(current);
+    }
   }
 
   void _show(int index) {
-    _range = index ~/ _rangeSize;
-    _keep(index);
+    if (_entries.isEmpty) {
+      _range = 0;
+      _top = 0;
+      return;
+    }
+    final clamped = index.clamp(0, _entries.length - 1);
+    _range = clamped ~/ _rangeSize;
+    _keep(clamped);
   }
 
   void _keep(int index) {
-    final row = (index - _start) ~/ _columns;
+    final row = (index - _start) ~/ _activeColumns;
     _top =
         (row < _top
                 ? row
@@ -191,7 +261,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
 
   bool _visible(int index) {
     if (index < _start || index >= _end) return false;
-    final row = (index - _start) ~/ _columns;
+    final row = (index - _start) ~/ _activeColumns;
     return row == _top || row == _top + 1;
   }
 
@@ -244,7 +314,8 @@ class TelevisionDetailState extends State<TelevisionDetail> {
     if (key == LogicalKeyboardKey.arrowUp ||
         key == LogicalKeyboardKey.arrowDown) {
       final down = key == LogicalKeyboardKey.arrowDown;
-      if (_row != _Row.grid || !_gridStep(down ? _columns : -_columns)) {
+      if (_row != _Row.grid ||
+          !_gridStep(down ? _activeColumns : -_activeColumns)) {
         final rows = _available;
         final next = rows.indexOf(_row) + (down ? 1 : -1);
         if (next >= rows.length) {
@@ -268,14 +339,14 @@ class TelevisionDetailState extends State<TelevisionDetail> {
 
   bool _gridStep(int delta) {
     final cell = _cell!;
-    final row = (cell - _start) ~/ _columns;
+    final row = (cell - _start) ~/ _activeColumns;
     if (delta < 0) {
       if (row == 0) return false;
       _cell = cell + delta;
     } else if (row + 1 < _rows) {
       _cell = math.min(cell + delta, _end - 1);
     } else if (_range + 1 < _rangeCount) {
-      final column = (cell - _start) % _columns;
+      final column = (cell - _start) % _activeColumns;
       _range++;
       _top = 0;
       _cell = math.min(_start + column, _end - 1);
@@ -290,6 +361,14 @@ class TelevisionDetailState extends State<TelevisionDetail> {
         _action = (_action + delta).clamp(0, _actionCount - 1);
       case _Row.seasons:
         _season = (_seasonIndex + delta).clamp(0, _details.seasons.length - 1);
+      case _Row.routes:
+        final route = (_routeIndex + delta).clamp(0, _routes.length - 1);
+        if (route != _route) {
+          _route = route;
+          _range = 0;
+          _top = 0;
+          _cell = null;
+        }
       case _Row.ranges:
         final range = (_range + delta).clamp(0, _rangeCount - 1);
         if (range != _range) {
@@ -297,7 +376,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
           _top = 0;
         }
       case _Row.grid:
-        final cell = (_cell! + delta).clamp(0, _episodes.length - 1);
+        final cell = (_cell! + delta).clamp(0, _entries.length - 1);
         final range = cell ~/ _rangeSize;
         if (range != _range) {
           _range = range;
@@ -311,10 +390,10 @@ class TelevisionDetailState extends State<TelevisionDetail> {
   void _enter(_Row row) {
     _row = row;
     if (row != _Row.grid) return;
-    final current = _details.currentIndex;
+    final current = _currentLocalIndex;
     _cell = [_cell, current].firstWhere(
       (cell) => cell != null && _visible(cell),
-      orElse: () => _start + _top * _columns,
+      orElse: () => _start + _top * _activeColumns,
     );
   }
 
@@ -331,10 +410,12 @@ class TelevisionDetailState extends State<TelevisionDetail> {
         }
       case _Row.seasons:
         widget.onSeason(_details.seasons[_seasonIndex]);
+      case _Row.routes:
+        _move(() => _enter(_Row.grid));
       case _Row.ranges:
         _move(() => _enter(_Row.grid));
       case _Row.grid:
-        widget.onEpisode(_cell!);
+        widget.onEpisode(_entries[_cell!].index);
     }
   }
 
@@ -346,6 +427,11 @@ class TelevisionDetailState extends State<TelevisionDetail> {
           _action = index;
         case _Row.seasons:
           _season = index;
+        case _Row.routes:
+          _route = index;
+          _range = 0;
+          _top = 0;
+          _cell = null;
         case _Row.ranges:
           _range = index;
           _top = 0;
@@ -370,6 +456,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
     if (!mounted) return;
     for (final key in [
       if (_seasoned) _key(_seasonKeys, _seasonIndex),
+      if (_routed) _key(_routeKeys, _routeIndex),
       if (_ranged) _key(_rangeKeys, _range),
     ]) {
       final target = key.currentContext;
@@ -525,6 +612,8 @@ class TelevisionDetailState extends State<TelevisionDetail> {
           ),
         )
       else ...[
+        if (_routed)
+          Padding(padding: const EdgeInsets.only(top: 14), child: _routeTabs()),
         if (_ranged)
           Padding(padding: const EdgeInsets.only(top: 12), child: _rangeTabs()),
         Padding(
@@ -796,12 +885,58 @@ class TelevisionDetailState extends State<TelevisionDetail> {
     );
   }
 
+  Widget _routeTabs() {
+    final focusedRow = _focused(_Row.routes);
+    return _tabStrip(
+      height: 30,
+      lead: _inset - 10,
+      spacing: 6,
+      children: [
+        for (final (index, route) in _routes.indexed)
+          Builder(
+            key: _key(_routeKeys, index),
+            builder: (context) {
+              final focused = focusedRow && _routeIndex == index;
+              final selected = _routeIndex == index;
+              return _Surface(
+                focused: focused,
+                scale: 1.06,
+                color: selected
+                    ? _accent.withValues(alpha: .28)
+                    : Colors.white.withValues(alpha: .08),
+                radius: 15,
+                height: 30,
+                padding: 12,
+                onTap: () => _tap(_Row.routes, index),
+                child: Text(
+                  route.name,
+                  style: _text(
+                    13,
+                    16,
+                    focused
+                        ? _focusText
+                        : selected
+                        ? Colors.white
+                        : Colors.white.withValues(alpha: .65),
+                    selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
   Widget _rangeTabs() {
     final focusedRow = _focused(_Row.ranges);
-    final wide = _episodes.length > 200;
-    final first = _start + _top * _columns;
-    final last = math.min(_start + (_top + 2) * _columns, _end) - 1;
+    final wide = _entries.length > 200;
+    final first = _start + _top * _activeColumns;
+    final last = math.min(_start + (_top + 2) * _activeColumns, _end) - 1;
     final hint = _text(12, 16, const Color(0xFF9A9AAA));
+    String rangeLabel(int from, int to) => _descriptive
+        ? '${from + 1}-${to + 1}'
+        : '${_entries[from].episode.number}-${_entries[to].episode.number}';
     Widget arrow(String glyph, bool active) => Opacity(
       opacity: active ? 1 : .25,
       child: Text(glyph, style: hint.copyWith(fontSize: 10)),
@@ -823,7 +958,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
                     final selected = _range == range;
                     final start = range * _rangeSize;
                     final end =
-                        math.min(start + _rangeSize, _episodes.length) - 1;
+                        math.min(start + _rangeSize, _entries.length) - 1;
                     return _Surface(
                       focused: focused,
                       scale: 1.06,
@@ -835,7 +970,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
                       padding: wide ? 9 : 12,
                       onTap: () => _tap(_Row.ranges, range),
                       child: Text(
-                        '${_episodes[start].number}-${_episodes[end].number}',
+                        rangeLabel(start, end),
                         style: _text(
                           13,
                           16,
@@ -859,10 +994,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
             spacing: 4,
             children: [
               arrow('▲', _top > 0),
-              Text(
-                '${_episodes[first].number}-${_episodes[last].number}',
-                style: hint,
-              ),
+              Text(rangeLabel(first, last), style: hint),
               arrow('▼', _top < _maxTop),
             ],
           ),
@@ -879,12 +1011,14 @@ class TelevisionDetailState extends State<TelevisionDetail> {
   }
 
   Widget _grid() {
-    final current = _details.currentIndex;
+    final current = _currentLocalIndex;
     final focusedRow = _focused(_Row.grid);
+    final columns = _activeColumns;
+    final descriptive = _descriptive;
     return SizedBox(
       height: _cellHeight * 3 + _rowGap * 2,
       child: TweenAnimationBuilder<double>(
-        key: ValueKey((_details.drama.id, _range)),
+        key: ValueKey((_details.drama.id, _routeIndex, _range)),
         tween: Tween(end: _top.toDouble()),
         duration: _focusDuration,
         curve: Curves.easeOut,
@@ -906,11 +1040,13 @@ class TelevisionDetailState extends State<TelevisionDetail> {
                   child: Row(
                     spacing: _columnGap,
                     children: [
-                      for (var column = 0; column < _columns; column++)
+                      for (var column = 0; column < columns; column++)
                         Expanded(
-                          child: switch (_start + row * _columns + column) {
+                          child: switch (_start + row * columns + column) {
                             final index when index < _end => _EpisodeTile(
-                              episode: _episodes[index],
+                              episode: _entries[index].episode,
+                              label: _entries[index].label,
+                              descriptive: descriptive,
                               focused: focusedRow && _cell == index,
                               current: index == current,
                               watched: current != null && index < current,
@@ -988,12 +1124,16 @@ class _Surface extends StatelessWidget {
 class _EpisodeTile extends StatelessWidget {
   const _EpisodeTile({
     required this.episode,
+    required this.label,
+    required this.descriptive,
     required this.focused,
     required this.current,
     required this.watched,
     required this.onTap,
   });
   final Episode episode;
+  final String label;
+  final bool descriptive;
   final bool focused;
   final bool current;
   final bool watched;
@@ -1002,7 +1142,7 @@ class _EpisodeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _Surface(
     focused: focused,
-    scale: 1.1,
+    scale: descriptive ? 1.04 : 1.1,
     color: Colors.white.withValues(alpha: .07),
     radius: 8,
     height: _cellHeight,
@@ -1011,19 +1151,25 @@ class _EpisodeTile extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         Center(
-          child: Text(
-            '${episode.number}',
-            style: _text(
-              17,
-              22,
-              focused
-                  ? _focusText
-                  : current
-                  ? Colors.white
-                  : watched
-                  ? const Color(0xFF85859A)
-                  : const Color(0xFFD2D2DC),
-              current ? FontWeight.w700 : FontWeight.w500,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: descriptive ? 10 : 4),
+            child: Text(
+              label,
+              maxLines: descriptive ? 2 : 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: _text(
+                descriptive ? 13 : 17,
+                descriptive ? 17 : 22,
+                focused
+                    ? _focusText
+                    : current
+                    ? Colors.white
+                    : watched
+                    ? const Color(0xFF85859A)
+                    : const Color(0xFFD2D2DC),
+                current ? FontWeight.w700 : FontWeight.w500,
+              ),
             ),
           ),
         ),

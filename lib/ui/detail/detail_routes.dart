@@ -13,15 +13,19 @@ typedef EpisodeScope = ({
 
 final _numericTitlePattern = RegExp(r'^第?\s*\d{1,4}\s*集?$');
 
-String compactEpisodeLabel(String rawLabel, int number) {
+bool isDescriptiveEpisodeLabel(String rawLabel, int number) {
   final trimmed = rawLabel.trim();
   if (trimmed.isEmpty ||
+      trimmed == '$number' ||
       trimmed == '第$number集' ||
       _numericTitlePattern.hasMatch(trimmed)) {
-    return '$number';
+    return false;
   }
-  return trimmed;
+  return true;
 }
+
+String compactEpisodeLabel(String rawLabel, int number) =>
+    isDescriptiveEpisodeLabel(rawLabel, number) ? rawLabel.trim() : '$number';
 
 List<EpisodeRoute> extractDetailRoutes(List<Episode> episodes) {
   if (episodes.isEmpty) return const [];
@@ -33,11 +37,7 @@ List<EpisodeRoute> extractDetailRoutes(List<Episode> episodes) {
     final route = episode.title.substring(0, sep).trim();
     final label = episode.title.substring(sep + 3).trim();
     if (route.isEmpty) return const [];
-    (grouped[route] ??= []).add((
-      episode: episode,
-      index: i,
-      label: label,
-    ));
+    (grouped[route] ??= []).add((episode: episode, index: i, label: label));
   }
   if (grouped.length < 2) return const [];
   return [

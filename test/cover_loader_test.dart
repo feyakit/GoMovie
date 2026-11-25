@@ -20,44 +20,74 @@ class _CoverRepository extends FakeRepository {
 String _id(int index) => 'hongguo:$index';
 
 void main() {
-  testWidgets('covers wait 40ms, run up to 10 at a time, newest first', (
+  testWidgets('covers wait briefly, run ten at a time, newest first', (
     tester,
   ) async {
     final repository = _CoverRepository();
     CoverRequest request(int index) =>
         CoverLoader.request(repository, drama('$index'));
     final requests = {
-      for (var index = 0; index < 8; index++) index: request(index),
+      for (var index = 0; index < 12; index++) index: request(index),
     };
 
-    // 实现是 40ms 去抖 + 最多 10 并发、后进先出（a502c8f）。
     await tester.pump(const Duration(milliseconds: 20));
     expect(repository.started, isEmpty);
-    requests[7]!.cancel();
-    await tester.pump(const Duration(milliseconds: 60));
-    // 定时器按创建顺序触发，并发没打满时逐个立即开跑，所以顺序是 0..6。
+    requests[11]!.cancel();
+    await tester.pump(const Duration(milliseconds: 25));
     expect(repository.started, [
-      for (var index = 0; index < 7; index++) _id(index),
+      for (var index = 0; index < 10; index++) _id(index),
     ]);
 
-    requests[8] = request(8);
-    requests[9] = request(9);
-    await tester.pump(const Duration(milliseconds: 60));
-    expect(repository.started, hasLength(9));
-    expect(repository.started, containsAll([_id(8), _id(9)]));
+    requests[12] = request(12);
+    requests[13] = request(13);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(repository.started, hasLength(10));
 
     repository.pending[_id(0)]!.complete('/covers/0.jpg');
     expect(await requests[0]!.file, '/covers/0.jpg');
+    await tester.pump();
+    expect(repository.started.last, _id(13));
 
-    requests[8]!.cancel();
+    requests[12]!.cancel();
     repository.pending[_id(1)]!.completeError(StateError('失败'));
     await expectLater(requests[1]!.file, throwsStateError);
     await tester.pump();
-    expect(repository.started, isNot(contains(_id(7))));
+    expect(repository.started.last, _id(10));
+
+    repository.pending[_id(2)]!.complete('/covers/2.jpg');
+    await tester.pump();
+    expect(repository.started, hasLength(12));
+    expect(repository.started, isNot(contains(_id(11))));
+    expect(repository.started, isNot(contains(_id(12))));
 
     for (final completer in repository.pending.values) {
       if (!completer.isCompleted) completer.complete('');
     }
     await tester.pump();
+  });
+
+  testWidgets('duplicate cover requests share one fetch until all cancel', (
+    tester,
+  ) async {
+    final repository = _CoverRepository();
+    final target = drama('dup');
+    final first = CoverLoader.request(repository, target);
+    final second = CoverLoader.request(repository, target);
+
+    await tester.pump(const Duration(milliseconds: 20));
+    first.cancel();
+    await tester.pump(const Duration(milliseconds: 30));
+
+    expect(repository.started, [_id(0).replaceFirst('0', 'dup')]);
+    repository.pending['hongguo:dup']!.complete('/covers/dup.jpg');
+    expect(await second.file, '/covers/dup.jpg');
+
+    final third = CoverLoader.request(repository, drama('cancel-all'));
+    final fourth = CoverLoader.request(repository, drama('cancel-all'));
+    await tester.pump(const Duration(milliseconds: 20));
+    third.cancel();
+    fourth.cancel();
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(repository.started, isNot(contains('hongguo:cancel-all')));
   });
 }

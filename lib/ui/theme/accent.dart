@@ -58,9 +58,7 @@ class AccentScheme {
 
   @override
   bool operator ==(Object other) =>
-      other is AccentScheme &&
-      other.accent == accent &&
-      other.source == source;
+      other is AccentScheme && other.accent == accent && other.source == source;
 
   @override
   int get hashCode => Object.hash(accent, source);
@@ -200,7 +198,12 @@ abstract final class AccentPicker {
   }
 
   static Color _color(double hue, double sat, double light) =>
-      HSLColor.fromAHSL(1, hue % 360, sat, light.clamp(0.0, 1.0).toDouble()).toColor();
+      HSLColor.fromAHSL(
+        1,
+        hue % 360,
+        sat,
+        light.clamp(0.0, 1.0).toDouble(),
+      ).toColor();
 
   /// 返回 [hue(0-360), sat, light]
   static List<double> _hsl(double r, double g, double b) {

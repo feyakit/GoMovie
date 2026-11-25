@@ -235,6 +235,7 @@ abstract class AppRepository {
     Map<String, String> extend = const {},
     bool force = false,
   });
+
   /// 二级筛选（TVBox 订阅源的 排序/地区/年份…），按分类 id 分组。
   Future<Map<String, List<CatalogFilter>>> categoryFilters(
     String source,
@@ -949,7 +950,10 @@ class NativeRepository extends AppRepository {
 
   @override
   Future<String> sourceChallengeUrl(String source) async {
-    final result = await _call({'action': 'sourceChallengeUrl', 'source': source});
+    final result = await _call({
+      'action': 'sourceChallengeUrl',
+      'source': source,
+    });
     return result['url'] as String? ?? '';
   }
 

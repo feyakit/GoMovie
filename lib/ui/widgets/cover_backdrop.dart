@@ -28,27 +28,30 @@ class CoverBackdrop extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        ClipRect(
-          child: Opacity(
-            opacity: opacity,
-            child: ImageFiltered(
-              imageFilter: ImageFilter.blur(
-                sigmaX: sigma,
-                sigmaY: sigma,
-                tileMode: TileMode.clamp,
-              ),
-              child: FadeSwitcher(
-                child: SizedBox.expand(
-                  key: ValueKey(drama.id),
-                  child: DramaCover.imagesDisabled || drama.id.isEmpty
-                      ? fallback
-                      : CoverImage(
-                          key: ValueKey('${drama.id}\u0000${drama.cover}'),
-                          drama: drama,
-                          repository: AppScope.of(context).repository,
-                          placeholder: fallback,
-                          retryable: false,
-                        ),
+        RepaintBoundary(
+          child: ClipRect(
+            child: Opacity(
+              opacity: opacity,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(
+                  sigmaX: sigma,
+                  sigmaY: sigma,
+                  tileMode: TileMode.clamp,
+                ),
+                child: FadeSwitcher(
+                  child: SizedBox.expand(
+                    key: ValueKey(drama.id),
+                    child: DramaCover.imagesDisabled || drama.id.isEmpty
+                        ? fallback
+                        : CoverImage(
+                            key: ValueKey('${drama.id}\u0000${drama.cover}'),
+                            drama: drama,
+                            repository: AppScope.of(context).repository,
+                            placeholder: fallback,
+                            retryable: false,
+                            decodeWidth: 240,
+                          ),
+                  ),
                 ),
               ),
             ),

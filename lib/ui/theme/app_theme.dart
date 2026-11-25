@@ -15,7 +15,10 @@ abstract final class AppTheme {
 
   /// 品牌渐变必须跟着当前主题色走，否则换主题色后图标/角标还是红金。
   static LinearGradient gradientFor(ColorScheme scheme) => LinearGradient(
-    colors: [scheme.primary, Color.lerp(scheme.primary, scheme.tertiary, 0.65)!],
+    colors: [
+      scheme.primary,
+      Color.lerp(scheme.primary, scheme.tertiary, 0.65)!,
+    ],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
@@ -122,9 +125,7 @@ abstract final class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.5),
-          ),
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
@@ -138,10 +139,18 @@ abstract final class AppTheme {
       ),
       // ---- 以下为「所有控件统一品牌风格」：规格来自 tokens.dart，页面里不要再写死 ----
       filledButtonTheme: FilledButtonThemeData(
-        style: _filled(scheme, background: scheme.primary, foreground: scheme.onPrimary),
+        style: _filled(
+          scheme,
+          background: scheme.primary,
+          foreground: scheme.onPrimary,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: _filled(scheme, background: scheme.primary, foreground: scheme.onPrimary),
+        style: _filled(
+          scheme,
+          background: scheme.primary,
+          foreground: scheme.onPrimary,
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(style: _outlined(scheme)),
       textButtonTheme: TextButtonThemeData(style: _text(scheme)),
@@ -151,7 +160,9 @@ abstract final class AppTheme {
             Size(Sizes.button, Sizes.button),
           ),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.sm),
+            ),
           ),
           overlayColor: WidgetStateProperty.resolveWith(
             (states) => states.contains(WidgetState.pressed)
@@ -200,7 +211,9 @@ abstract final class AppTheme {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
-          borderSide: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.45)),
+          borderSide: BorderSide(
+            color: scheme.outlineVariant.withValues(alpha: 0.45),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
@@ -220,7 +233,9 @@ abstract final class AppTheme {
           fontSize: TypeScale.label,
           color: scheme.onSurfaceVariant,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.sm),
+        ),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith(
@@ -247,14 +262,20 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(Radii.md),
           side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.4)),
         ),
-        textStyle: TextStyle(fontSize: TypeScale.title, color: scheme.onSurface),
+        textStyle: TextStyle(
+          fontSize: TypeScale.title,
+          color: scheme.onSurface,
+        ),
       ),
       tooltipTheme: TooltipThemeData(
         decoration: BoxDecoration(
           color: scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(Radii.xs),
         ),
-        textStyle: TextStyle(fontSize: TypeScale.label, color: scheme.onSurface),
+        textStyle: TextStyle(
+          fontSize: TypeScale.label,
+          color: scheme.onSurface,
+        ),
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: scheme.onSurface,
@@ -262,8 +283,14 @@ abstract final class AppTheme {
         indicatorColor: scheme.primary,
         indicatorSize: TabBarIndicatorSize.label,
         dividerColor: Colors.transparent,
-        labelStyle: TextStyle(fontSize: TypeScale.title, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: TypeScale.title, fontWeight: FontWeight.w500),
+        labelStyle: TextStyle(
+          fontSize: TypeScale.title,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontSize: TypeScale.title,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
@@ -272,7 +299,9 @@ abstract final class AppTheme {
             TextStyle(fontSize: TypeScale.body, fontWeight: FontWeight.w600),
           ),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.pill)),
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.pill),
+            ),
           ),
         ),
       ),
@@ -284,7 +313,9 @@ abstract final class AppTheme {
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(Radii.md),
-              side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.45)),
+              side: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
             ),
           ),
         ),
@@ -314,9 +345,7 @@ abstract final class AppTheme {
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: scheme.outlineVariant.withValues(alpha: 0.6),
-          ),
+          side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
@@ -380,7 +409,9 @@ abstract final class AppTheme {
       fontSize: TypeScale.title,
       fontWeight: FontWeight.w600,
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Radii.sm)),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Radii.sm),
+    ),
   );
 
   static ThemeData _television(ThemeData theme) {

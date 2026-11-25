@@ -13,10 +13,13 @@ class StageBackdrop extends StatelessWidget {
   final String cover;
   final AccentScheme accent;
 
-  static ImageProvider _provider(String cover) =>
-      (cover.startsWith('http://') || cover.startsWith('https://'))
-      ? NetworkImage(cover)
-      : FileImage(File(cover));
+  static ImageProvider _provider(String cover) => ResizeImage.resizeIfNeeded(
+    240,
+    null,
+    (cover.startsWith('http://') || cover.startsWith('https://'))
+        ? NetworkImage(cover)
+        : FileImage(File(cover)),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -26,15 +29,18 @@ class StageBackdrop extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (cover.isNotEmpty)
-            ImageFiltered(
-              imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: Image(
-                image: _provider(cover),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stack) => const SizedBox.shrink(),
-                frameBuilder: (context, child, frame, wasSync) => Opacity(
-                  opacity: (frame == null && !wasSync) ? 0 : 1,
-                  child: child,
+            RepaintBoundary(
+              child: ImageFiltered(
+                imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Image(
+                  image: _provider(cover),
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) =>
+                      const SizedBox.shrink(),
+                  frameBuilder: (context, child, frame, wasSync) => Opacity(
+                    opacity: (frame == null && !wasSync) ? 0 : 1,
+                    child: child,
+                  ),
                 ),
               ),
             ),

@@ -420,7 +420,9 @@ class ExplorePageState extends State<ExplorePage> {
         key: const ValueKey('error'),
         title: isChallenge ? '需要完成人机验证' : '暂时无法加载',
         message: feed.error,
-        icon: isChallenge ? Icons.verified_user_outlined : Icons.cloud_off_rounded,
+        icon: isChallenge
+            ? Icons.verified_user_outlined
+            : Icons.cloud_off_rounded,
         action: isChallenge ? '完成人机验证' : '重试',
         onAction: () async {
           if (isChallenge) {
@@ -599,7 +601,8 @@ class ExplorePageState extends State<ExplorePage> {
         );
       }
     }
-    final featured = explore.featured ??
+    final featured =
+        explore.featured ??
         (showCarousel ? explore.feed?.items.firstOrNull : null);
     if (featured case final drama?) {
       final feedItems = explore.feed?.items ?? const <Drama>[];

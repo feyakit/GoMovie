@@ -720,11 +720,7 @@ class _SideItem extends StatelessWidget {
                               alwaysIncludeSemantics: true,
                               duration: Motion.of(context, Motion.short),
                               curve: expanded
-                                  ? const Interval(
-                                      0.4,
-                                      1,
-                                      curve: Motion.enter,
-                                    )
+                                  ? const Interval(0.4, 1, curve: Motion.enter)
                                   : Motion.exit,
                               child: AnimatedDefaultTextStyle(
                                 duration: duration,
@@ -872,86 +868,88 @@ class _FloatingGlassDock extends StatelessWidget {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Container(
-              height: 62,
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              decoration: BoxDecoration(
-                color: dark
-                    ? const Color(0xCC141418)
-                    : const Color(0xE6F7F7FA),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
+        child: RepaintBoundary(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(28),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+              child: Container(
+                height: 62,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                decoration: BoxDecoration(
                   color: dark
-                      ? Colors.white.withValues(alpha: 0.1)
-                      : Colors.black.withValues(alpha: 0.08),
+                      ? const Color(0xCC141418)
+                      : const Color(0xE6F7F7FA),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: dark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.black.withValues(alpha: 0.08),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  for (final tab in tabs)
-                    Expanded(
-                      child: Semantics(
-                        selected: tab == selected,
-                        button: true,
-                        label: tab.label,
-                        child: InkWell(
-                          key: ValueKey('nav-${tab.name}'),
-                          borderRadius: BorderRadius.circular(22),
-                          onTap: () => onSelect(tab),
-                          child: AnimatedContainer(
-                            duration: duration,
-                            curve: Motion.standard,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              color: tab == selected
-                                  ? colors.primary.withValues(alpha: 0.16)
-                                  : Colors.transparent,
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              spacing: 2,
-                              children: [
-                                AnimatedScale(
-                                  scale: tab == selected ? 1.08 : 0.96,
-                                  duration: duration,
-                                  curve: Motion.enter,
-                                  child: badged(
-                                    tab,
-                                    Icon(
-                                      tab == selected
-                                          ? tab.selectedIcon
-                                          : tab.icon,
-                                      size: 21,
+                child: Row(
+                  children: [
+                    for (final tab in tabs)
+                      Expanded(
+                        child: Semantics(
+                          selected: tab == selected,
+                          button: true,
+                          label: tab.label,
+                          child: InkWell(
+                            key: ValueKey('nav-${tab.name}'),
+                            borderRadius: BorderRadius.circular(22),
+                            onTap: () => onSelect(tab),
+                            child: AnimatedContainer(
+                              duration: duration,
+                              curve: Motion.standard,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(22),
+                                color: tab == selected
+                                    ? colors.primary.withValues(alpha: 0.16)
+                                    : Colors.transparent,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                spacing: 2,
+                                children: [
+                                  AnimatedScale(
+                                    scale: tab == selected ? 1.08 : 0.96,
+                                    duration: duration,
+                                    curve: Motion.enter,
+                                    child: badged(
+                                      tab,
+                                      Icon(
+                                        tab == selected
+                                            ? tab.selectedIcon
+                                            : tab.icon,
+                                        size: 21,
+                                        color: tab == selected
+                                            ? colors.primary
+                                            : colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    tab.label,
+                                    maxLines: 1,
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: tab == selected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
                                       color: tab == selected
-                                          ? colors.primary
+                                          ? colors.onSurface
                                           : colors.onSurfaceVariant,
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  tab.label,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: tab == selected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    color: tab == selected
-                                        ? colors.onSurface
-                                        : colors.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

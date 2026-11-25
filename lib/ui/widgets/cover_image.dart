@@ -246,18 +246,19 @@ class CoverImage extends StatefulWidget {
     required this.repository,
     required this.placeholder,
     this.retryable = true,
+    this.decodeWidth = 440,
   });
   final Drama drama;
   final AppRepository repository;
   final Widget placeholder;
   final bool retryable;
+  final int decodeWidth;
 
   @override
   State<CoverImage> createState() => _CoverImageState();
 }
 
 class _CoverImageState extends State<CoverImage> {
-  static const _decodeWidth = 440;
   CoverRequest? _request;
   Future<String>? _file;
   String? _known;
@@ -338,7 +339,7 @@ class _CoverImageState extends State<CoverImage> {
   Future<void> _retry(String? path) async {
     if (path != null) {
       await ResizeImage.resizeIfNeeded(
-        _decodeWidth,
+        widget.decodeWidth,
         null,
         FileImage(File(path)),
       ).evict();
@@ -390,7 +391,7 @@ class _CoverImageState extends State<CoverImage> {
   Widget _image(String path) => Image.file(
     File(path),
     fit: BoxFit.cover,
-    cacheWidth: _decodeWidth,
+    cacheWidth: widget.decodeWidth,
     excludeFromSemantics: true,
     frameBuilder: fadeInFrameBuilder,
     errorBuilder: (_, _, _) => _failure(path),

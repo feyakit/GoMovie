@@ -382,8 +382,7 @@ class LocalStore extends ChangeNotifier {
 
   String sourceNetworkMode(String source) =>
       switch (_settings['sourceNetworkModes']) {
-        final Map modes when modes[source] is String =>
-          modes[source] as String,
+        final Map modes when modes[source] is String => modes[source] as String,
         _ => 'follow',
       };
 
@@ -634,7 +633,8 @@ class LocalStore extends ChangeNotifier {
     return _userSetting('source', value);
   }
 
-  Future<void> setSourceGroup(String value) => _userSetting('sourceGroup', value);
+  Future<void> setSourceGroup(String value) =>
+      _userSetting('sourceGroup', value);
 
   Future<void> setDisplayMode(String value) => _displayModes.contains(value)
       ? _setting('displayMode', value)

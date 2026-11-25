@@ -226,7 +226,9 @@ class ExploreHero extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF2E54).withValues(alpha: 0.35),
+                          color: const Color(
+                            0xFFFF2E54,
+                          ).withValues(alpha: 0.35),
                           blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),
@@ -364,11 +366,7 @@ class ExploreHero extends StatelessWidget {
         ),
       ),
     );
-    return Semantics(
-      container: true,
-      label: kicker,
-      child: card,
-    );
+    return Semantics(container: true, label: kicker, child: card);
   }
 }
 
@@ -474,11 +472,16 @@ class _PhoneCarouselHeroState extends State<_PhoneCarouselHero> {
                             return AnimatedBuilder(
                               animation: _controller,
                               builder: (context, child) {
-                                final page = _controller.hasClients &&
+                                final page =
+                                    _controller.hasClients &&
                                         _controller.position.haveDimensions
-                                    ? (_controller.page ?? currentIndex.toDouble())
+                                    ? (_controller.page ??
+                                          currentIndex.toDouble())
                                     : currentIndex.toDouble();
-                                final dist = (page - index).abs().clamp(0.0, 1.0);
+                                final dist = (page - index).abs().clamp(
+                                  0.0,
+                                  1.0,
+                                );
                                 final scale = 1.0 - dist * 0.14;
                                 final opacity = 1.0 - dist * 0.42;
                                 return Center(

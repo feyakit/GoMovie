@@ -10,6 +10,7 @@ import '../../models.dart';
 import '../../webview_bridge.dart';
 import '../app_scope.dart';
 import '../downloads/download_picker_page.dart';
+import '../netdisk/netdisk_page.dart';
 import '../player/playback_handle.dart';
 import '../player/playback_page.dart';
 import '../settings/settings_page.dart';
@@ -355,8 +356,8 @@ class _DetailPageState extends State<DetailPage> {
       final form = AppScope.formFactorOf(context);
       if (_coverPath.isEmpty) unawaited(_loadCover());
       if (form == FormFactor.television) return _televisionPage(details);
-      final page = (form == FormFactor.phone ||
-              MediaQuery.sizeOf(context).width < 840)
+      final page =
+          (form == FormFactor.phone || MediaQuery.sizeOf(context).width < 840)
           ? _phonePage(details)
           : _widePage(details, desktop: form == FormFactor.window);
       return AccentStage(accent: _accent, cover: _coverPath, child: page);
@@ -843,26 +844,27 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) => DecoratedBox(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(m.coverRadius),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x4D000000),
-          blurRadius: 26,
-          offset: Offset(0, 10),
+  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) =>
+      DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(m.coverRadius),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x4D000000),
+              blurRadius: 26,
+              offset: Offset(0, 10),
+            ),
+          ],
         ),
-      ],
-    ),
-    child: SizedBox.fromSize(
-      size: m.cover,
-      child: DramaCover(
-        drama: drama,
-        radius: m.coverRadius,
-        heroScope: hero ? 'drama' : null,
-      ),
-    ),
-  );
+        child: SizedBox.fromSize(
+          size: m.cover,
+          child: DramaCover(
+            drama: drama,
+            radius: m.coverRadius,
+            heroScope: hero ? 'drama' : null,
+          ),
+        ),
+      );
 
   Widget _headline(
     DramaDetails details,
@@ -940,27 +942,30 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _followingHeadline(DramaDetails details, DetailMetrics m, double top) =>
-      ConstrainedBox(
-        constraints: BoxConstraints(minHeight: m.cover.height - top),
-        child: IntrinsicHeight(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _headline(details, m),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: FollowPill(
-                  store: widget.store,
-                  drama: details.drama,
-                  height: m.follow,
-                ),
-              ),
-            ],
+  Widget _followingHeadline(
+    DramaDetails details,
+    DetailMetrics m,
+    double top,
+  ) => ConstrainedBox(
+    constraints: BoxConstraints(minHeight: m.cover.height - top),
+    child: IntrinsicHeight(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _headline(details, m),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: FollowPill(
+              store: widget.store,
+              drama: details.drama,
+              height: m.follow,
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget? _stats(Drama drama, DetailMetrics m) {
     final stats = [
@@ -1188,13 +1193,24 @@ class _DetailPageState extends State<DetailPage> {
         details.load();
       },
       secondaryAction: error != null
-          ? (widget.drama.source == 'sorani' &&
-                    (error.contains('登录') || error.contains('账号'))
+          ? (isNetdiskAuthError(error, source: widget.drama.source)
+                ? '去登录网盘'
+                : widget.drama.source == 'sorani' &&
+                      (error.contains('登录') || error.contains('账号'))
                 ? '登录青空'
                 : '网络代理')
           : null,
       onSecondaryAction: error != null
           ? () async {
+              if (isNetdiskAuthError(error, source: widget.drama.source)) {
+                await Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => NetdiskPage(store: widget.store),
+                  ),
+                );
+                if (mounted) details.load();
+                return;
+              }
               if (widget.drama.source == 'sorani' &&
                   (error.contains('登录') || error.contains('账号'))) {
                 final account = await showSoraniLogin(context);
@@ -1207,18 +1223,6 @@ class _DetailPageState extends State<DetailPage> {
           : null,
       autofocus: autofocus,
     );
-  }
-
-  static final _numericTitlePattern = RegExp(r'^第?\s*\d{1,4}\s*集?$');
-
-  static bool _isDescriptiveLabel(String label, int number) {
-    final trimmed = label.trim();
-    if (trimmed.isEmpty ||
-        trimmed == '$number' ||
-        _numericTitlePattern.hasMatch(trimmed)) {
-      return false;
-    }
-    return true;
   }
 
   EpisodeScope _resolveEpisodeScope(DramaDetails details) =>
@@ -1255,11 +1259,7 @@ class _DetailPageState extends State<DetailPage> {
     details.selectGroup(group);
   }
 
-  String _scopeGroupLabel(
-    DramaDetails details,
-    EpisodeScope scope,
-    int group,
-  ) {
+  String _scopeGroupLabel(DramaDetails details, EpisodeScope scope, int group) {
     if (scope.routes.length < 2) {
       return details.groupLabel(group);
     }
@@ -1299,9 +1299,8 @@ class _DetailPageState extends State<DetailPage> {
             ),
           )
         : details.episodes.any(
-            (e) => (e.raw['videoUrl'] as String? ?? '').startsWith(
-              'netdisk://',
-            ),
+            (e) =>
+                (e.raw['videoUrl'] as String? ?? '').startsWith('netdisk://'),
           );
     final unit = isNetdisk ? '个文件' : '集';
     final summary = [
@@ -1464,7 +1463,7 @@ class _DetailPageState extends State<DetailPage> {
     final descriptive = entries.any(
       (entry) =>
           entry.label.length > 4 ||
-          _isDescriptiveLabel(entry.label, entry.episode.number),
+          isDescriptiveEpisodeLabel(entry.label, entry.episode.number),
     );
     final television = AppScope.of(context).television;
     final extent = descriptive

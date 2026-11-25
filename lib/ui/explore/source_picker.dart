@@ -114,7 +114,9 @@ class _SourcePickerState extends State<SourcePicker> {
     final items = _visible();
     final current = _store.source;
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.78,
@@ -300,9 +302,9 @@ class _SourcePickerState extends State<SourcePicker> {
       if (mounted) setState(() {});
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('设置网络策略失败：$error')),
-      );
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text('设置网络策略失败：$error')));
     }
   }
 }

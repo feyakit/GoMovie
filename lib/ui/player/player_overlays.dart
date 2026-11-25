@@ -135,11 +135,7 @@ class PlayerRouteNoticeBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.swap_horiz_rounded,
-              size: 16,
-              color: Colors.white,
-            ),
+            const Icon(Icons.swap_horiz_rounded, size: 16, color: Colors.white),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
