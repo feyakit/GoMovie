@@ -161,6 +161,13 @@ class SettingsSection extends StatelessWidget {
     return [
       SettingsCard(
         children: [
+          SwitchTile(
+            title: '播完自动下一集',
+            subtitle: '关掉后停在当前集，自己选下一集',
+            value: preferences.autoAdvance,
+            onChanged: (value) =>
+                savePreferences(preferences.copyWith(autoAdvance: value)),
+          ),
           ValueTile<double>(
             title: '默认倍速',
             subtitle: '与播放器内设置同步',

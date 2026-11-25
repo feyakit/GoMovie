@@ -525,9 +525,13 @@ class PlaybackSession extends ChangeNotifier {
         ? position <= Duration.zero
         : position < duration - const Duration(seconds: 2)) {
       _queueRecovery('early_completion');
-    } else if (_foreground && hasNext && !_sleepAtEpisodeEnd) {
+    } else if (_foreground &&
+        store.playbackPreferences.autoAdvance &&
+        hasNext &&
+        !_sleepAtEpisodeEnd) {
       unawaited(play(_index + 1));
     } else if (_foreground &&
+        store.playbackPreferences.autoAdvance &&
         !_sleepAtEpisodeEnd &&
         detail.nextSeason != null) {
       unawaited(_playNextSeason());
