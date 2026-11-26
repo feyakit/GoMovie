@@ -1,5 +1,5 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"
 #include "Generated.xcconfig"
-PRODUCT_BUNDLE_IDENTIFIER = com.gomovie.app
+PRODUCT_BUNDLE_IDENTIFIER = com.feyakit.cinebox
 APP_DISPLAY_NAME = GoMovie
 #include? "AppVariant.xcconfig"

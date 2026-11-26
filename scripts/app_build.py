@@ -15,7 +15,7 @@ class AppBuild:
 
     @property
     def bundle_identifier(self):
-        return os.environ.get('PACKAGE_NAME', '').strip() or 'com.gomovie.app'
+        return os.environ.get('PACKAGE_NAME', '').strip() or 'com.feyakit.cinebox'
 
     @property
     def flutter_arguments(self):

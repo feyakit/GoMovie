@@ -8,7 +8,7 @@
 PRODUCT_NAME = gomovie_app
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.gomovie.app
+PRODUCT_BUNDLE_IDENTIFIER = com.feyakit.cinebox
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.gomovie. All rights reserved.
