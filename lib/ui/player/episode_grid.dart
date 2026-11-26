@@ -70,7 +70,7 @@ class _EpisodeGridState extends State<EpisodeGrid> {
 
   (List<EpisodeRoute>, String, List<RouteEntry>) _resolveEntries() {
     final routes = extractDetailRoutes(_episodes);
-    if (routes.length < 2) {
+    if (routes.isEmpty) {
       return (
         const [],
         '',
@@ -354,7 +354,7 @@ class _EpisodeGridState extends State<EpisodeGrid> {
             SliverToBoxAdapter(
               child: KeyedSubtree(key: _headerKey, child: header),
             ),
-          if (routes.length > 1)
+          if (routes.isNotEmpty)
             SliverToBoxAdapter(
               child: KeyedSubtree(
                 key: _routeBarKey,

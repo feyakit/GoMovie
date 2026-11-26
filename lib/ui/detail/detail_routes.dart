@@ -27,19 +27,42 @@ bool isDescriptiveEpisodeLabel(String rawLabel, int number) {
 String compactEpisodeLabel(String rawLabel, int number) =>
     isDescriptiveEpisodeLabel(rawLabel, number) ? rawLabel.trim() : '$number';
 
+bool isNetdiskEpisode(Episode episode) {
+  final videoUrl = (episode.raw['videoUrl'] as String? ?? '').trim();
+  final source = (episode.raw['source'] as String? ?? '').trim();
+  return videoUrl.startsWith('netdisk:') || source == 'quark' || source == 'uc';
+}
+
 List<EpisodeRoute> extractDetailRoutes(List<Episode> episodes) {
   if (episodes.isEmpty) return const [];
+  var hasRoutePrefix = false;
+  for (final episode in episodes) {
+    final sep = episode.title.indexOf(' · ');
+    if (sep > 0 && episode.title.substring(0, sep).trim().isNotEmpty) {
+      hasRoutePrefix = true;
+      break;
+    }
+  }
+  if (!hasRoutePrefix) return const [];
   final grouped = <String, List<RouteEntry>>{};
   for (var i = 0; i < episodes.length; i++) {
     final episode = episodes[i];
     final sep = episode.title.indexOf(' · ');
-    if (sep <= 0) return const [];
-    final route = episode.title.substring(0, sep).trim();
-    final label = episode.title.substring(sep + 3).trim();
-    if (route.isEmpty) return const [];
-    (grouped[route] ??= []).add((episode: episode, index: i, label: label));
+    if (sep > 0) {
+      final route = episode.title.substring(0, sep).trim();
+      final label = episode.title.substring(sep + 3).trim();
+      if (route.isNotEmpty) {
+        (grouped[route] ??= []).add((episode: episode, index: i, label: label));
+        continue;
+      }
+    }
+    (grouped['默认线路'] ??= []).add((
+      episode: episode,
+      index: i,
+      label: episode.title.trim(),
+    ));
   }
-  if (grouped.length < 2) return const [];
+  if (grouped.isEmpty) return const [];
   return [
     for (final entry in grouped.entries)
       (name: entry.key, entries: entry.value),
@@ -53,7 +76,7 @@ EpisodeScope resolveDetailEpisodeScope(
   required int routeGroup,
 }) {
   final routes = extractDetailRoutes(details.episodes);
-  if (routes.length < 2) {
+  if (routes.isEmpty) {
     return (
       routes: const [],
       routeName: '',

@@ -286,7 +286,7 @@ class _DetailPageState extends State<DetailPage> {
   void _locate(int index) {
     final details = _details!;
     final scope = _resolveEpisodeScope(details);
-    if (scope.routes.length >= 2) {
+    if (scope.routes.isNotEmpty) {
       for (final route in scope.routes) {
         final pos = route.entries.indexWhere((entry) => entry.index == index);
         if (pos >= 0) {
@@ -524,7 +524,7 @@ class _DetailPageState extends State<DetailPage> {
                   final scope = _resolveEpisodeScope(details);
                   return SliverMainAxisGroup(
                     slivers: [
-                      if (scope.routes.length > 1) ...[
+                      if (scope.routes.isNotEmpty) ...[
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -667,7 +667,7 @@ class _DetailPageState extends State<DetailPage> {
                 height: desktop ? 44 : 48,
                 child: _episodeHeader(details, m, scope: scope),
               ),
-              if (scope != null && scope.routes.length > 1)
+              if (scope != null && scope.routes.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Wrap(
@@ -1245,7 +1245,7 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void _selectGroup(DramaDetails details, EpisodeScope scope, int group) {
-    if (scope.routes.length > 1) {
+    if (scope.routes.isNotEmpty) {
       if (group == scope.group || group < 0 || group >= scope.groupCount) {
         return;
       }
@@ -1260,7 +1260,7 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   String _scopeGroupLabel(DramaDetails details, EpisodeScope scope, int group) {
-    if (scope.routes.length < 2) {
+    if (scope.routes.isEmpty) {
       return details.groupLabel(group);
     }
     final active = scope.routes.firstWhere(
@@ -1277,7 +1277,7 @@ class _DetailPageState extends State<DetailPage> {
     required bool selected,
     required int? currentIndex,
   }) => _GroupChip(
-    label: '${route.name} (${route.entries.length})',
+    label: route.name,
     selected: selected,
     metrics: m,
     onPressed: () => _selectRoute(route, currentIndex),
@@ -1289,23 +1289,18 @@ class _DetailPageState extends State<DetailPage> {
     EpisodeScope? scope,
   }) {
     final current = details.currentIndex;
-    final activeRoute = scope != null && scope.routes.length > 1
+    final activeRoute = scope != null && scope.routes.isNotEmpty
         ? scope.routes.firstWhere((route) => route.name == scope.routeName)
         : null;
     final isNetdisk = activeRoute != null
-        ? activeRoute.entries.any(
-            (e) => (e.episode.raw['videoUrl'] as String? ?? '').startsWith(
-              'netdisk://',
-            ),
-          )
-        : details.episodes.any(
-            (e) =>
-                (e.raw['videoUrl'] as String? ?? '').startsWith('netdisk://'),
-          );
+        ? activeRoute.entries.any((e) => isNetdiskEpisode(e.episode))
+        : details.episodes.any(isNetdiskEpisode);
     final unit = isNetdisk ? '个文件' : '集';
     final summary = [
-      if (activeRoute != null)
-        '${activeRoute.entries.length} $unit · ${scope!.routes.length} 条线路'
+      if (activeRoute != null && scope!.routes.length > 1)
+        '${activeRoute.entries.length} $unit · ${scope.routes.length} 条线路'
+      else if (activeRoute != null)
+        '${activeRoute.entries.length} $unit'
       else
         '${details.episodes.length} $unit',
       if (current != null && !isNetdisk)
@@ -1462,14 +1457,16 @@ class _DetailPageState extends State<DetailPage> {
         ];
     final descriptive = entries.any(
       (entry) =>
+          isNetdiskEpisode(entry.episode) ||
           entry.label.length > 4 ||
           isDescriptiveEpisodeLabel(entry.label, entry.episode.number),
     );
+    final formFactor = AppScope.formFactorOf(context);
     final television = AppScope.of(context).television;
     final extent = descriptive
         ? math.max(
-            television ? 64.0 : 46.0,
-            MediaQuery.textScalerOf(context).scale(m.cellText) * 2 + 18,
+            television ? 64.0 : 54.0,
+            MediaQuery.textScalerOf(context).scale(m.cellText) * 2 + 22,
           )
         : math.max(
             m.cell,
@@ -1496,12 +1493,14 @@ class _DetailPageState extends State<DetailPage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns = descriptive
-            ? math.max(
-                1,
-                ((constraints.maxWidth + m.cellGap) /
-                        ((television ? 210.0 : 148.0) + m.cellGap))
-                    .floor(),
-              )
+            ? (formFactor == FormFactor.phone
+                  ? 2
+                  : math.max(
+                      2,
+                      ((constraints.maxWidth + m.cellGap) /
+                              ((television ? 210.0 : 168.0) + m.cellGap))
+                          .floor(),
+                    ))
             : m.columnsFor(constraints.maxWidth);
         final fade = Motion.of(context, Motion.medium);
         return TweenAnimationBuilder<double>(

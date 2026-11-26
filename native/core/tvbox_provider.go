@@ -581,23 +581,28 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 	chapters := make([]Chapter, 0)
 	globalIndex := 0
 	seenRoutes := make(map[string]int, len(urlGroups))
+	uniqueRoute := func(base string) string {
+		name := strings.TrimSpace(base)
+		if name == "" {
+			return ""
+		}
+		if count := seenRoutes[name]; count > 0 {
+			seenRoutes[name] = count + 1
+			return fmt.Sprintf("%s (%d)", name, count+1)
+		}
+		seenRoutes[name] = 1
+		return name
+	}
 
 	for rIdx, group := range urlGroups {
-		routeName := ""
+		rawRouteName := ""
 		if rIdx < len(routes) {
-			routeName = strings.TrimSpace(routes[rIdx])
+			rawRouteName = strings.TrimSpace(routes[rIdx])
 		}
-		if len(urlGroups) > 1 {
-			if routeName == "" {
-				routeName = fmt.Sprintf("线路 %d", rIdx+1)
-			}
-			if count := seenRoutes[routeName]; count > 0 {
-				seenRoutes[routeName] = count + 1
-				routeName = fmt.Sprintf("%s (%d)", routeName, count+1)
-			} else {
-				seenRoutes[routeName] = 1
-			}
+		if rawRouteName == "" && len(urlGroups) > 1 {
+			rawRouteName = fmt.Sprintf("线路 %d", rIdx+1)
 		}
+		routeName := uniqueRoute(rawRouteName)
 		rawEntries := strings.Split(group, "#")
 		entries := make([]string, 0, len(rawEntries))
 		for _, e := range rawEntries {
@@ -605,32 +610,49 @@ func (p *tvboxProvider) Detail(ctx context.Context, sourceID string) (Drama, []C
 				entries = append(entries, e)
 			}
 		}
-		if len(entries) == 1 {
-			_, rawLink := parseEpisodeEntry(entries[0], "正片")
+
+		routeEpIndex := 0
+		for eIdx, entry := range entries {
+			epName, rawLink := parseEpisodeEntry(entry, fmt.Sprintf("第 %d 集", routeEpIndex+1))
+			if rawLink == "" {
+				continue
+			}
 			if shareURL := netdisk.ExtractShareURL(rawLink); shareURL != "" {
 				if provider := netdisk.DetectProvider(shareURL); provider == "quark" || provider == "uc" {
-					if expanded, ok := p.expandNetdiskShare(ctx, drama.ID, routeName, provider, shareURL, &globalIndex); ok {
+					shareRoute := routeName
+					if len(entries) > 1 {
+						sub := strings.TrimSpace(epName)
+						switch {
+						case shareRoute != "" && sub != "" && sub != fmt.Sprintf("第 %d 集", routeEpIndex+1):
+							shareRoute = uniqueRoute(shareRoute + " " + sub)
+						case shareRoute != "":
+							shareRoute = uniqueRoute(fmt.Sprintf("%s %d", shareRoute, eIdx+1))
+						case sub != "":
+							shareRoute = uniqueRoute(sub)
+						default:
+							shareRoute = uniqueRoute(fmt.Sprintf("网盘线路 %d", eIdx+1))
+						}
+					} else if shareRoute == "" {
+						if provider == "uc" {
+							shareRoute = uniqueRoute("UC网盘")
+						} else {
+							shareRoute = uniqueRoute("夸克网盘")
+						}
+					}
+					if expanded, ok := p.expandNetdiskShare(ctx, drama.ID, shareRoute, provider, shareURL, &globalIndex); ok {
 						chapters = append(chapters, expanded...)
 						continue
 					}
 				}
 			}
-		}
-
-		routeEpIndex := 0
-		for _, entry := range entries {
-			epName, rawLink := parseEpisodeEntry(entry, fmt.Sprintf("第 %d 集", routeEpIndex+1))
-			if rawLink == "" {
-				continue
-			}
-			if routeName != "" && len(urlGroups) > 1 {
+			if routeName != "" {
 				epName = routeName + " · " + epName
 			}
 			videoRef := rawLink
 			if shareURL := netdisk.ExtractShareURL(rawLink); shareURL != "" {
 				videoRef = encodeNetdiskVideoRef(0, shareURL)
 			} else if p.site.Kind == tvbox.KindJar {
-				videoRef = "spider:" + url.QueryEscape(routeName) + "|" + rawLink
+				videoRef = "spider:" + url.QueryEscape(rawRouteName) + "|" + rawLink
 			} else if before, _, ok := strings.Cut(rawLink, "$"); ok && (strings.HasPrefix(strings.ToLower(before), "http://") || strings.HasPrefix(strings.ToLower(before), "https://")) {
 				videoRef = strings.TrimSpace(before)
 			}
@@ -671,7 +693,7 @@ func (p *tvboxProvider) expandNetdiskShare(ctx context.Context, dramaID, routeNa
 	out := make([]Chapter, 0, len(info.Episodes))
 	for i, ep := range info.Episodes {
 		*globalIndex++
-		title := ep.Name
+		title := formatNetdiskEpisodeTitle(ep.Name, ep.Size)
 		if routeName != "" {
 			title = routeName + " · " + title
 		}

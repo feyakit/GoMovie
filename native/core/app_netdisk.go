@@ -229,12 +229,27 @@ func formatNetdiskSize(bytes int64) string {
 	const gb = 1024 * 1024 * 1024
 	const mb = 1024 * 1024
 	if bytes >= gb {
-		return fmt.Sprintf("%.1fGB", float64(bytes)/float64(gb))
+		return fmt.Sprintf("%.2fGB", float64(bytes)/float64(gb))
 	}
 	if bytes >= mb {
 		return fmt.Sprintf("%dMB", bytes/mb)
 	}
 	return ""
+}
+
+func formatNetdiskEpisodeTitle(name string, size int64) string {
+	trimmed := strings.TrimSpace(name)
+	sizeText := formatNetdiskSize(size)
+	if sizeText == "" {
+		return trimmed
+	}
+	if strings.HasPrefix(trimmed, "[") {
+		return trimmed
+	}
+	if trimmed == "" {
+		return "[" + sizeText + "]"
+	}
+	return "[" + sizeText + "] " + trimmed
 }
 
 func shareInfoToDrama(source, shareURL string, info *netdisk.ShareInfo) (Drama, []Chapter) {
@@ -256,10 +271,7 @@ func shareInfoToDrama(source, shareURL string, info *netdisk.ShareInfo) (Drama, 
 	}
 	chapters := make([]Chapter, 0, len(info.Episodes))
 	for i, ep := range info.Episodes {
-		epTitle := ep.Name
-		if sizeText := formatNetdiskSize(ep.Size); sizeText != "" {
-			epTitle = epTitle + " · " + sizeText
-		}
+		epTitle := formatNetdiskEpisodeTitle(ep.Name, ep.Size)
 		epNum, _ := json.Marshal(i + 1)
 		chapters = append(chapters, Chapter{
 			ID:             drama.ID + "#" + strconv.Itoa(i),
