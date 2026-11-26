@@ -112,7 +112,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
   DramaDetails get _details => widget.details;
   List<Episode> get _episodes => _details.episodes;
   List<EpisodeRoute> get _routes => extractDetailRoutes(_episodes);
-  bool get _routed => _routes.length >= 2;
+  bool get _routed => _routes.isNotEmpty;
   int get _routeIndex => _routed ? _route.clamp(0, _routes.length - 1) : 0;
 
   List<RouteEntry> get _entries => _routed
