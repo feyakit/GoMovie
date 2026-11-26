@@ -1,0 +1,16 @@
+{
+  "id": "jable",
+  "name": "Jable",
+  "version": "1.0.0",
+  "description": "分类视频 · 在线搜索",
+  "runtime": "js",
+  "api": 1,
+  "adult": true,
+  "hosts": ["jable.tv", "www.jable.tv", "fs1.app"],
+  "capabilities": ["search"],
+  "aliases": ["jable.tv", "www.jable.tv", "fs1.app"],
+  "baseUrl": "https://jable.tv",
+  "allowEmptyCatalog": true,
+  "noHostRotation": true,
+  "browserFingerprint": true
+}

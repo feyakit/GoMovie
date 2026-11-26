@@ -27,7 +27,7 @@ env:
   GOSUMDB: sum.golang.org
   UPDATE_SERVER_URL: ${{ vars.UPDATE_SERVER_URL }}
   PACKAGE_NAME: ${{ vars.PACKAGE_NAME }}
-  BUNDLED_MODULES: modules/beabox,modules/dsd,modules/hanime1,modules/hanxiaoquan,modules/heitao,modules/hongguo,modules/huangguo-video,modules/huangguoai,modules/huangju,modules/ikanbot,modules/jinguoduanju,modules/sorani,modules/yeguo,modules/missav
+  BUNDLED_MODULES: modules/beabox,modules/dsd,modules/hanime1,modules/hanxiaoquan,modules/heitao,modules/hongguo,modules/huangguo-video,modules/huangguoai,modules/huangju,modules/ikanbot,modules/jable,modules/jinguoduanju,modules/sorani,modules/yeguo,modules/missav
   PYTHONUTF8: '1'
   PROJECT_URL: ${{ vars.PROJECT_URL }}
   TELEGRAM_GROUP_URL: ${{ vars.TELEGRAM_GROUP_URL }}
