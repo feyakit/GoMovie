@@ -47,7 +47,9 @@ class _NetdiskPageState extends State<NetdiskPage> {
   final _tvboxUrl = TextEditingController();
   bool _loading = false;
   bool _loggedIn = false;
+  bool _ucLoggedIn = false;
   String _status = '';
+  String _ucStatus = '';
   String _tvboxSummary = '未订阅饭太硬 / TVBox 接口';
   int _tvboxSupported = 0;
   List<Map<String, dynamic>> _episodes = const [];
@@ -56,7 +58,9 @@ class _NetdiskPageState extends State<NetdiskPage> {
   @override
   void initState() {
     super.initState();
-    _refreshStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refreshStatus();
+    });
   }
 
   @override
@@ -81,7 +85,9 @@ class _NetdiskPageState extends State<NetdiskPage> {
       }
       setState(() {
         _loggedIn = ready['quark'] == true;
+        _ucLoggedIn = ready['uc'] == true;
         _status = _loggedIn ? '夸克已登录' : '夸克未登录';
+        _ucStatus = _ucLoggedIn ? 'UC 网盘已登录' : 'UC 网盘未登录';
         _tvboxSupported = supported;
         _tvboxSummary = subUrl.isEmpty
             ? '未订阅饭太硬 / TVBox 接口'
@@ -122,9 +128,63 @@ class _NetdiskPageState extends State<NetdiskPage> {
     }
   }
 
-  Future<void> _logout() async {
-    await AppScope.of(context).repository.netdiskLogout('quark');
+  Future<void> _logout(String provider) async {
+    await AppScope.of(context).repository.netdiskLogout(provider);
     await _refreshStatus();
+  }
+
+  Future<void> _loginCookie(String provider, String title) async {
+    final controller = TextEditingController();
+    final cookie = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('$title Cookie 登录'),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: SizedBox(
+            width: double.maxFinite,
+            child: TextField(
+              controller: controller,
+              minLines: 3,
+              maxLines: 6,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: '粘贴网页端完整 Cookie（需包含 __puus）',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (cookie == null || cookie.isEmpty || !mounted) return;
+    setState(() => _loading = true);
+    try {
+      await AppScope.of(context).repository.netdiskSetCookie(provider, cookie);
+      await _refreshStatus();
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$title 登录已保存')));
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
   }
 
   Future<void> _cleanupTemp() async {
@@ -293,7 +353,7 @@ class _NetdiskPageState extends State<NetdiskPage> {
               padding: EdgeInsets.only(bottom: 12),
               child: LinearProgressIndicator(minHeight: 3),
             ),
-          const SectionHeader(title: '夸克网盘账号'),
+          const SectionHeader(title: '网盘账号'),
           GroupCard(
             children: [
               ListTile(
@@ -317,7 +377,10 @@ class _NetdiskPageState extends State<NetdiskPage> {
                 ),
                 subtitle: Text(_status.isEmpty ? '正在检查登录态…' : _status),
                 trailing: _loggedIn
-                    ? TextButton(onPressed: _logout, child: const Text('退出登录'))
+                    ? TextButton(
+                        onPressed: () => _logout('quark'),
+                        child: const Text('退出登录'),
+                      )
                     : FilledButton(
                         onPressed: _loading ? null : _login,
                         child: const Text('扫码登录'),
@@ -338,6 +401,43 @@ class _NetdiskPageState extends State<NetdiskPage> {
                     ),
                   ),
                 ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _ucLoggedIn
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_outlined,
+                    size: 20,
+                    color: _ucLoggedIn
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
+                  ),
+                ),
+                title: const Text(
+                  'UC 网盘',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(_ucStatus.isEmpty ? '正在检查登录态…' : _ucStatus),
+                trailing: _ucLoggedIn
+                    ? TextButton(
+                        onPressed: () => _logout('uc'),
+                        child: const Text('退出登录'),
+                      )
+                    : OutlinedButton(
+                        onPressed: _loading
+                            ? null
+                            : () => _loginCookie('uc', 'UC 网盘'),
+                        child: const Text('Cookie 登录'),
+                      ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
