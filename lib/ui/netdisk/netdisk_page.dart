@@ -386,21 +386,6 @@ class _NetdiskPageState extends State<NetdiskPage> {
                         child: const Text('扫码登录'),
                       ),
               ),
-              if (_loggedIn)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _loading ? null : _cleanupTemp,
-                      icon: const Icon(
-                        Icons.cleaning_services_outlined,
-                        size: 16,
-                      ),
-                      label: const Text('清理临时目录 (gomovie_tmp)'),
-                    ),
-                  ),
-                ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
@@ -438,6 +423,21 @@ class _NetdiskPageState extends State<NetdiskPage> {
                         child: const Text('Cookie 登录'),
                       ),
               ),
+              if (_loggedIn || _ucLoggedIn)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: _loading ? null : _cleanupTemp,
+                      icon: const Icon(
+                        Icons.cleaning_services_outlined,
+                        size: 16,
+                      ),
+                      label: const Text('清理临时目录 (gomovie_tmp)'),
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 16),

@@ -240,15 +240,37 @@ func (engine *nativeEngine) netdiskCleanup(ctx context.Context) (map[string]any,
 	if err != nil {
 		return nil, err
 	}
-	creds, err := rt.store.Get("quark")
-	if err != nil {
+	total := 0
+	cleanedAny := false
+	var firstErr error
+	for _, provider := range []string{"quark", "uc"} {
+		creds, getErr := rt.store.Get(provider)
+		if getErr != nil || !netdisk.ProviderReady(creds) {
+			continue
+		}
+		cleanedAny = true
+		var client *netdisk.Quark
+		if provider == "uc" {
+			client = netdisk.NewUC(creds)
+		} else {
+			client = netdisk.NewQuark(creds)
+		}
+		deleted, cleanErr := client.CleanupTemp(ctx)
+		if cleanErr != nil {
+			if firstErr == nil {
+				firstErr = cleanErr
+			}
+			continue
+		}
+		total += deleted
+	}
+	if !cleanedAny {
 		return nil, netdisk.ErrNotLoggedIn
 	}
-	deleted, err := netdisk.NewQuark(creds).CleanupTemp(ctx)
-	if err != nil {
-		return nil, err
+	if firstErr != nil && total == 0 {
+		return nil, firstErr
 	}
-	return map[string]any{"deleted": deleted, "tempDir": "gomovie_tmp"}, nil
+	return map[string]any{"deleted": total, "tempDir": "gomovie_tmp"}, nil
 }
 
 // netdiskInfo 返回临时目录说明。
