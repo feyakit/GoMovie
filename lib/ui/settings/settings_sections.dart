@@ -668,6 +668,7 @@ class _ProxyDialogState extends State<_ProxyDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
+    scrollable: true,
     title: const Text('代理地址'),
     content: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 420),

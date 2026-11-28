@@ -96,7 +96,10 @@ Future<T?> showChoicePanel<T>({
             color: Theme.of(context).colorScheme.surfaceContainerLow,
             elevation: 8,
             child: SizedBox(
-              width: grid.televisionWidth,
+              width: math.min(
+                grid.televisionWidth,
+                MediaQuery.sizeOf(context).width * 0.85,
+              ),
               height: double.infinity,
               child: panel(context),
             ),
@@ -211,9 +214,27 @@ class _ChoicePanelState<T> extends State<_ChoicePanel<T>> {
           ),
       ],
     );
+    final media = MediaQuery.of(context);
+    final bottomInset = math.max(
+      media.viewInsets.bottom,
+      media.viewPadding.bottom,
+    );
+    final phoneColumns =
+        form == FormFactor.phone && media.size.width < 360 && widget.columns > 3
+        ? 3
+        : widget.columns;
+    final baseExtent = switch (form) {
+      FormFactor.phone => 44.0,
+      FormFactor.pad || FormFactor.window => 36.0,
+      FormFactor.television => 48.0,
+    };
+    final cellExtent = (media.textScaler.scale(14) + 24).clamp(
+      baseExtent,
+      72.0,
+    );
     return Padding(
       padding: switch (form) {
-        FormFactor.phone => const EdgeInsets.fromLTRB(16, 0, 4, 20),
+        FormFactor.phone => EdgeInsets.fromLTRB(16, 0, 4, 20 + bottomInset),
         FormFactor.pad ||
         FormFactor.window => const EdgeInsets.fromLTRB(16, 12, 16, 12),
         FormFactor.television => const EdgeInsets.fromLTRB(32, 36, 48, 32),
@@ -287,14 +308,10 @@ class _ChoicePanelState<T> extends State<_ChoicePanel<T>> {
                       padding: EdgeInsets.all(television ? 12 : 6),
                       itemCount: filtered.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: widget.columns,
+                        crossAxisCount: phoneColumns,
                         mainAxisSpacing: spacing,
                         crossAxisSpacing: spacing,
-                        mainAxisExtent: switch (form) {
-                          FormFactor.phone => 44,
-                          FormFactor.pad || FormFactor.window => 36,
-                          FormFactor.television => 48,
-                        },
+                        mainAxisExtent: cellExtent,
                       ),
                       itemBuilder: (context, index) => _ChoiceCell<T>(
                         option: filtered[index],

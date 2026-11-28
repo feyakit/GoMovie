@@ -126,9 +126,11 @@ class _SearchPageState extends State<SearchPage> {
       }
       return;
     }
-    final results = _results = DramaFeed(
-      load: (page, _) => _catalog.search(query, page: page),
-    )..addListener(() => setState(() {}));
+    final results = _results =
+        DramaFeed(load: (page, _) => _catalog.search(query, page: page))
+          ..addListener(() {
+            if (mounted) setState(() {});
+          });
     unawaited(results.reload());
     setState(() {
       _submitted = query;
@@ -328,10 +330,11 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
 
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
       children: [
         pill('当前站源', !_aggregate, () => _setAggregate(false)),
-        const SizedBox(width: 8),
         pill('全网聚合 ($total)', _aggregate, () => _setAggregate(true)),
       ],
     );
@@ -546,7 +549,10 @@ class _SearchPageState extends State<SearchPage> {
           if (sourceOrder.length > 1)
             SliverToBoxAdapter(
               child: SizedBox(
-                height: 44,
+                height: (MediaQuery.textScalerOf(context).scale(14) + 30).clamp(
+                  44.0,
+                  66.0,
+                ),
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.symmetric(horizontal: inset, vertical: 4),
@@ -577,7 +583,12 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(inset, 8, inset, television ? 27 : 20),
+            padding: EdgeInsets.fromLTRB(
+              inset,
+              8,
+              inset,
+              (television ? 27 : 20) + MediaQuery.paddingOf(context).bottom,
+            ),
             sliver: DramaSliverGrid(
               width: constraints.maxWidth - inset * 2,
               items: displayed,

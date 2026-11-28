@@ -48,6 +48,7 @@ class _SoraniAccountButtonState extends State<SoraniAccountButton> {
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
     final account = await _repository.soraniAccount().catchError(
       (_) => const SoraniAccount(),
     );

@@ -183,7 +183,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _mergeFinished(MergeTask task) {
-    if (task.state == MergeState.cancelled) return;
+    if (!mounted || task.state == MergeState.cancelled) return;
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       SnackBar(
         content: Text(
@@ -196,6 +196,7 @@ class _AppShellState extends State<AppShell> {
   }
 
   void _followFocus() {
+    if (!mounted) return;
     final previous = _lastFocus;
     final focused = _lastFocus = FocusManager.instance.primaryFocus;
     final index = _tabFocus.indexWhere((node) => node == focused);
@@ -853,10 +854,16 @@ class _FloatingGlassDock extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final dark = theme.brightness == Brightness.dark;
-    final bottom = MediaQuery.viewPaddingOf(context).bottom;
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final bottom = viewPadding.bottom;
     final duration = Motion.of(context, Motion.medium);
     return Padding(
-      padding: EdgeInsets.fromLTRB(18, 0, 18, bottom > 0 ? bottom + 6 : 14),
+      padding: EdgeInsets.fromLTRB(
+        18 + viewPadding.left,
+        0,
+        18 + viewPadding.right,
+        bottom > 0 ? bottom + 6 : 14,
+      ),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),

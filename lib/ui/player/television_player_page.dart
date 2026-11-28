@@ -1005,77 +1005,87 @@ class _TelevisionPlayerPageState extends State<TelevisionPlayerPage>
           ),
         ],
       ),
-      child: IntrinsicWidth(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          spacing: 2,
-          children: [
-            for (final (index, value) in values.indexed)
-              ListenableBuilder(
-                listenable: _options[index],
-                builder: (context, _) {
-                  final focused = _options[index].hasPrimaryFocus;
-                  final current = value == selected;
-                  final color = focused
-                      ? colors.onPrimary
-                      : current
-                      ? colors.primary
-                      : Colors.white.withValues(alpha: .88);
-                  return Semantics(
-                    label: label(value),
-                    selected: current,
-                    button: true,
-                    excludeSemantics: true,
-                    child: InkWell(
-                      focusNode: _options[index],
-                      onTap: () => _pick(menu, value),
-                      borderRadius: BorderRadius.circular(10),
-                      focusColor: Colors.transparent,
-                      hoverColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      splashColor: Colors.transparent,
-                      child: Container(
-                        height: 44,
-                        padding: const EdgeInsets.fromLTRB(12, 0, 18, 0),
-                        decoration: BoxDecoration(
-                          color: focused ? colors.primary : null,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: (MediaQuery.sizeOf(context).height - 140).clamp(
+            160.0,
+            400.0,
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: IntrinsicWidth(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 2,
+              children: [
+                for (final (index, value) in values.indexed)
+                  ListenableBuilder(
+                    listenable: _options[index],
+                    builder: (context, _) {
+                      final focused = _options[index].hasPrimaryFocus;
+                      final current = value == selected;
+                      final color = focused
+                          ? colors.onPrimary
+                          : current
+                          ? colors.primary
+                          : Colors.white.withValues(alpha: .88);
+                      return Semantics(
+                        label: label(value),
+                        selected: current,
+                        button: true,
+                        excludeSemantics: true,
+                        child: InkWell(
+                          focusNode: _options[index],
+                          onTap: () => _pick(menu, value),
                           borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          spacing: 8,
-                          children: [
-                            SizedBox(
-                              width: 18,
-                              child: current
-                                  ? Icon(
-                                      Icons.check_rounded,
-                                      size: 18,
-                                      color: color,
-                                    )
-                                  : null,
+                          focusColor: Colors.transparent,
+                          hoverColor: Colors.transparent,
+                          highlightColor: Colors.transparent,
+                          splashColor: Colors.transparent,
+                          child: Container(
+                            height: 44,
+                            padding: const EdgeInsets.fromLTRB(12, 0, 18, 0),
+                            decoration: BoxDecoration(
+                              color: focused ? colors.primary : null,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            Text(
-                              label(value),
-                              style: TextStyle(
-                                color: color,
-                                fontSize: 17,
-                                fontWeight: current || focused
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures(),
-                                ],
-                              ),
+                            child: Row(
+                              spacing: 8,
+                              children: [
+                                SizedBox(
+                                  width: 18,
+                                  child: current
+                                      ? Icon(
+                                          Icons.check_rounded,
+                                          size: 18,
+                                          color: color,
+                                        )
+                                      : null,
+                                ),
+                                Text(
+                                  label(value),
+                                  style: TextStyle(
+                                    color: color,
+                                    fontSize: 17,
+                                    fontWeight: current || focused
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-          ],
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

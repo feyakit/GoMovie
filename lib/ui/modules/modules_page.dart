@@ -91,6 +91,7 @@ class _ModulesPageState extends State<ModulesPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       _refresh();
       _loadIndex();
     });
@@ -112,6 +113,7 @@ class _ModulesPageState extends State<ModulesPage>
   }
 
   Future<void> _refresh() async {
+    if (!mounted) return;
     try {
       final modules = await _repository.modules();
       if (mounted) {
@@ -126,6 +128,7 @@ class _ModulesPageState extends State<ModulesPage>
   }
 
   Future<void> _loadIndex() async {
+    if (!mounted) return;
     setState(() {
       _index = null;
       _indexError = null;
@@ -154,8 +157,10 @@ class _ModulesPageState extends State<ModulesPage>
     } catch (failure) {
       _show('$failure');
     } finally {
-      if (mounted) setState(() => _busy = false);
-      await _refresh();
+      if (mounted) {
+        setState(() => _busy = false);
+        await _refresh();
+      }
     }
   }
 
@@ -810,9 +815,18 @@ class _ModuleCard extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-                    child: Row(
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       spacing: 8,
-                      children: [...leading, const Spacer(), ...actions],
+                      runSpacing: 6,
+                      children: [
+                        if (leading.isNotEmpty)
+                          Wrap(spacing: 8, runSpacing: 6, children: leading)
+                        else
+                          const SizedBox.shrink(),
+                        Wrap(spacing: 8, runSpacing: 6, children: actions),
+                      ],
                     ),
                   ),
                 ],

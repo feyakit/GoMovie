@@ -66,9 +66,10 @@ class _SwipeControlsState extends State<SwipeControls> {
 
   void _seekUpdate(DragUpdateDetails details) {
     final from = _seekFrom;
-    if (from == null) return;
+    final size = context.size;
+    if (from == null || size == null || size.width <= 0) return;
     final span = math.min(_duration, _seekSpan);
-    final offset = _seekOffset + details.delta.dx / context.size!.width * span;
+    final offset = _seekOffset + details.delta.dx / size.width * span;
     setState(
       () => _seekOffset = offset.clamp(-from, _duration - from).toDouble(),
     );
@@ -86,7 +87,9 @@ class _SwipeControlsState extends State<SwipeControls> {
   }
 
   Future<void> _levelStart(DragStartDetails details) async {
-    final level = details.localPosition.dx < context.size!.width / 2
+    final size = context.size;
+    if (size == null || size.width <= 0 || size.height <= 0) return;
+    final level = details.localPosition.dx < size.width / 2
         ? _Level.brightness
         : _Level.volume;
     setState(() {
@@ -103,8 +106,9 @@ class _SwipeControlsState extends State<SwipeControls> {
   }
 
   void _levelUpdate(DragUpdateDetails details) {
-    if (_level == null) return;
-    final delta = -details.delta.dy / context.size!.height;
+    final size = context.size;
+    if (_level == null || size == null || size.height <= 0) return;
+    final delta = -details.delta.dy / size.height;
     if (_value case final value?) {
       _apply(value + delta);
     } else {
@@ -261,55 +265,59 @@ class _SwipeControlsState extends State<SwipeControls> {
         ? Icons.volume_off_rounded
         : Icons.volume_up_rounded;
     return IgnorePointer(
-      child: Align(
-        alignment: Alignment(isBrightness ? -.82 : .82, 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 8,
-          children: [
-            Container(
-              width: 42,
-              height: 142,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: .58),
-                borderRadius: BorderRadius.circular(21),
-                border: Border.all(color: Colors.white.withValues(alpha: .14)),
-              ),
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  FractionallySizedBox(
-                    heightFactor: clamped,
-                    widthFactor: 1,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .88),
-                        borderRadius: BorderRadius.circular(17),
+      child: SafeArea(
+        child: Align(
+          alignment: Alignment(isBrightness ? -.82 : .82, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 8,
+            children: [
+              Container(
+                width: 42,
+                height: 142,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: .58),
+                  borderRadius: BorderRadius.circular(21),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: .14),
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    FractionallySizedBox(
+                      heightFactor: clamped,
+                      widthFactor: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .88),
+                          borderRadius: BorderRadius.circular(17),
+                        ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Icon(
-                      icon,
-                      size: 18,
-                      color: clamped > 0.22 ? Colors.black87 : Colors.white,
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Icon(
+                        icon,
+                        size: 18,
+                        color: clamped > 0.22 ? Colors.black87 : Colors.white,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Text(
-              '${isBrightness ? '亮度' : '音量'} ${(clamped * 100).round()}%',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+              Text(
+                '${isBrightness ? '亮度' : '音量'} ${(clamped * 100).round()}%',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  shadows: [Shadow(color: Colors.black54, blurRadius: 4)],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -67,6 +67,9 @@ class _PlaybackPageState extends State<PlaybackPage> {
     _pageScope.dispose();
     if (_padFullscreen.value) _applyPadFullscreen(false);
     _padFullscreen.dispose();
+    if (_locked && !desktopPlatform) {
+      unawaited(AppDevice.releaseHeldOrientation());
+    }
     unawaited(AppDevice.resetBrightness());
     widget.handle.dispose();
     super.dispose();

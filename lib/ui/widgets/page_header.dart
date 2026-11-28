@@ -8,8 +8,8 @@ class PageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 0, 8, 0),
-    child: SizedBox(
-      height: 64,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 64),
       child: Row(
         children: [
           Expanded(

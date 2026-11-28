@@ -86,11 +86,13 @@ class _CategoryTabsState<T> extends State<CategoryTabs<T>> {
   Widget build(BuildContext context) {
     final form = AppScope.formFactorOf(context);
     final colors = Theme.of(context).colorScheme;
-    final (height, fontSize, padding, fade) = switch (form) {
+    final (baseHeight, fontSize, padding, fade) = switch (form) {
       FormFactor.phone => (48.0, 15.0, 12.0, 32.0),
       FormFactor.pad || FormFactor.window => (48.0, 14.0, 14.0, 40.0),
       FormFactor.television => (44.0, 16.0, 16.0, 48.0),
     };
+    final height = (MediaQuery.textScalerOf(context).scale(fontSize) + 30)
+        .clamp(baseHeight, 72.0);
     _keys.removeWhere(
       (value, _) => !widget.options.any((option) => option.value == value),
     );
@@ -164,7 +166,7 @@ class _CategoryTabsState<T> extends State<CategoryTabs<T>> {
                             child: IgnorePointer(
                               child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  gradient: AppTheme.brandGradient,
+                                  gradient: AppTheme.gradientFor(colors),
                                   borderRadius: const BorderRadius.vertical(
                                     top: Radius.circular(3),
                                   ),

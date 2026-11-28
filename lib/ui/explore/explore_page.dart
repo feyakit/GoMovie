@@ -107,14 +107,15 @@ class ExplorePageState extends State<ExplorePage> {
   );
 
   Future<void> _openNetdiskShare() async {
-    final controller = TextEditingController();
+    var input = '';
     final url = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        scrollable: true,
         title: const Text('粘贴网盘链接'),
         content: TextField(
-          controller: controller,
           autofocus: true,
+          onChanged: (value) => input = value,
           decoration: const InputDecoration(
             hintText: 'https://pan.quark.cn/s/...',
             border: OutlineInputBorder(),
@@ -127,14 +128,12 @@ class ExplorePageState extends State<ExplorePage> {
             child: const Text('取消'),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
+            onPressed: () => Navigator.of(dialogContext).pop(input.trim()),
             child: const Text('解析'),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (!mounted || url == null || url.isEmpty) return;
     final messenger = ScaffoldMessenger.of(context);
     messenger.showSnackBar(
@@ -525,7 +524,7 @@ class ExplorePageState extends State<ExplorePage> {
                 inset,
                 8,
                 inset,
-                television ? 27 : 16,
+                (television ? 27 : 16) + MediaQuery.paddingOf(context).bottom,
               ),
               sliver: SliverToBoxAdapter(child: FeedFooter(feed: feed)),
             ),

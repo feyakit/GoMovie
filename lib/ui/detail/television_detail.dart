@@ -512,8 +512,7 @@ class TelevisionDetailState extends State<TelevisionDetail> {
                 ..._backdrop(),
                 Positioned.fill(
                   child: SingleChildScrollView(
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(top: 36),
+                    padding: const EdgeInsets.only(top: 36, bottom: 24),
                     child: _content(),
                   ),
                 ),

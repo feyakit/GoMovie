@@ -173,15 +173,19 @@ class _BackGestureState extends State<_BackGesture>
     if (!_active || _committed) return;
     _route.animation?.removeStatusListener(_opened);
     _committed = true;
-    final navigator = _route.navigator!;
-    final animation = _route.animation!;
+    final navigator = _route.navigator;
+    final animation = _route.animation;
+    if (navigator == null) return;
     navigator.pop();
-    if (!animation.isAnimating) return navigator.didStopUserGesture();
+    if (animation == null || !animation.isAnimating) {
+      navigator.didStopUserGesture();
+      return;
+    }
     late final AnimationStatusListener closed;
     closed = (status) {
       if (status.isAnimating) return;
       animation.removeStatusListener(closed);
-      navigator.didStopUserGesture();
+      if (navigator.mounted) navigator.didStopUserGesture();
     };
     animation.addStatusListener(closed);
   }

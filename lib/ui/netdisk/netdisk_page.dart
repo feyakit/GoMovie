@@ -59,7 +59,7 @@ class _NetdiskPageState extends State<NetdiskPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _refreshStatus();
+      if (mounted) unawaited(_refreshStatus());
     });
   }
 
@@ -129,25 +129,34 @@ class _NetdiskPageState extends State<NetdiskPage> {
   }
 
   Future<void> _logout(String provider) async {
-    await AppScope.of(context).repository.netdiskLogout(provider);
-    await _refreshStatus();
+    try {
+      await AppScope.of(context).repository.netdiskLogout(provider);
+      if (!mounted) return;
+      await _refreshStatus();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
   }
 
   Future<void> _loginCookie(String provider, String title) async {
-    final controller = TextEditingController();
+    var input = '';
     final cookie = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: Text('$title Cookie 登录'),
         content: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SizedBox(
             width: double.maxFinite,
             child: TextField(
-              controller: controller,
               minLines: 3,
               maxLines: 6,
               autofocus: true,
+              onChanged: (value) => input = value,
               decoration: const InputDecoration(
                 hintText: '粘贴网页端完整 Cookie（需包含 __puus）',
                 border: OutlineInputBorder(),
@@ -161,13 +170,12 @@ class _NetdiskPageState extends State<NetdiskPage> {
             child: const Text('取消'),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            onPressed: () => Navigator.pop(context, input.trim()),
             child: const Text('保存'),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (cookie == null || cookie.isEmpty || !mounted) return;
     setState(() => _loading = true);
     try {
@@ -187,10 +195,12 @@ class _NetdiskPageState extends State<NetdiskPage> {
     }
   }
 
-  Future<void> _cleanupTemp() async {
+  Future<void> _cleanupTemp(String provider) async {
     setState(() => _loading = true);
     try {
-      final res = await AppScope.of(context).repository.netdiskCleanup();
+      final res = await AppScope.of(
+        context,
+      ).repository.netdiskCleanup(provider: provider);
       final deleted = res['deleted'] as int? ?? 0;
       if (!mounted) return;
       setState(() => _loading = false);
@@ -345,211 +355,253 @@ class _NetdiskPageState extends State<NetdiskPage> {
     final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('网盘与订阅')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        children: [
-          if (_loading)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: LinearProgressIndicator(minHeight: 3),
-            ),
-          const SectionHeader(title: '网盘账号'),
-          GroupCard(
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _loggedIn ? Icons.cloud_done_rounded : Icons.cloud_outlined,
-                    size: 20,
-                    color: _loggedIn ? colors.primary : colors.onSurfaceVariant,
-                  ),
-                ),
-                title: const Text(
-                  '夸克网盘',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(_status.isEmpty ? '正在检查登录态…' : _status),
-                trailing: _loggedIn
-                    ? TextButton(
-                        onPressed: () => _logout('quark'),
-                        child: const Text('退出登录'),
-                      )
-                    : FilledButton(
-                        onPressed: _loading ? null : _login,
-                        child: const Text('扫码登录'),
-                      ),
+      body: SafeArea(
+        top: false,
+        bottom: false,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: ListView(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                28 + MediaQuery.paddingOf(context).bottom,
               ),
-              if (_loggedIn)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _loading ? null : _cleanupTemp,
-                      icon: const Icon(
-                        Icons.cleaning_services_outlined,
-                        size: 16,
-                      ),
-                      label: const Text('清理临时目录 (gomovie_tmp)'),
-                    ),
+              children: [
+                if (_loading)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: LinearProgressIndicator(minHeight: 3),
                   ),
-                ),
-              const Divider(height: 1, indent: 16, endIndent: 16),
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _ucLoggedIn
-                        ? Icons.cloud_done_rounded
-                        : Icons.cloud_outlined,
-                    size: 20,
-                    color: _ucLoggedIn
-                        ? colors.primary
-                        : colors.onSurfaceVariant,
-                  ),
-                ),
-                title: const Text(
-                  'UC 网盘',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(_ucStatus.isEmpty ? '正在检查登录态…' : _ucStatus),
-                trailing: _ucLoggedIn
-                    ? TextButton(
-                        onPressed: () => _logout('uc'),
-                        child: const Text('退出登录'),
-                      )
-                    : OutlinedButton(
-                        onPressed: _loading
-                            ? null
-                            : () => _loginCookie('uc', 'UC 网盘'),
-                        child: const Text('Cookie 登录'),
-                      ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const SectionHeader(title: '饭太硬 / TVBox 接口订阅'),
-          GroupCard(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SectionHeader(title: '网盘账号'),
+                GroupCard(
                   children: [
-                    Text(
-                      _tvboxSummary,
-                      style: text.bodyMedium?.copyWith(
-                        color: colors.onSurfaceVariant,
+                    ListTile(
+                      contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _loggedIn
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_outlined,
+                          size: 20,
+                          color: _loggedIn
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
+                        ),
+                      ),
+                      title: const Text(
+                        '夸克网盘',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(_status.isEmpty ? '正在检查登录态…' : _status),
+                      trailing: _loggedIn
+                          ? TextButton(
+                              onPressed: () => _logout('quark'),
+                              child: const Text('退出登录'),
+                            )
+                          : FilledButton(
+                              onPressed: _loading ? null : _login,
+                              child: const Text('扫码登录'),
+                            ),
+                    ),
+                    if (_loggedIn)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _loading
+                                ? null
+                                : () => _cleanupTemp('quark'),
+                            icon: const Icon(
+                              Icons.cleaning_services_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('清理临时目录 (gomovie_tmp)'),
+                          ),
+                        ),
+                      ),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    ListTile(
+                      contentPadding: const EdgeInsets.fromLTRB(16, 6, 12, 6),
+                      leading: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: colors.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _ucLoggedIn
+                              ? Icons.cloud_done_rounded
+                              : Icons.cloud_outlined,
+                          size: 20,
+                          color: _ucLoggedIn
+                              ? colors.primary
+                              : colors.onSurfaceVariant,
+                        ),
+                      ),
+                      title: const Text(
+                        'UC 网盘',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      subtitle: Text(
+                        _ucStatus.isEmpty ? '正在检查登录态…' : _ucStatus,
+                      ),
+                      trailing: _ucLoggedIn
+                          ? TextButton(
+                              onPressed: () => _logout('uc'),
+                              child: const Text('退出登录'),
+                            )
+                          : OutlinedButton(
+                              onPressed: _loading
+                                  ? null
+                                  : () => _loginCookie('uc', 'UC 网盘'),
+                              child: const Text('Cookie 登录'),
+                            ),
+                    ),
+                    if (_ucLoggedIn)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 12, 10),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton.icon(
+                            onPressed: _loading
+                                ? null
+                                : () => _cleanupTemp('uc'),
+                            icon: const Icon(
+                              Icons.cleaning_services_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('清理临时目录 (gomovie_tmp)'),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const SectionHeader(title: '饭太硬 / TVBox 接口订阅'),
+                GroupCard(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _tvboxSummary,
+                            style: text.bodyMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _tvboxUrl,
+                                  onChanged: (_) => setState(() {}),
+                                  decoration: const InputDecoration(
+                                    hintText: '输入订阅 JSON 地址 (http/https)',
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton(
+                                onPressed: _loading ? null : _subscribeTVBox,
+                                child: const Text('同步'),
+                              ),
+                            ],
+                          ),
+                          if (_tvboxUrl.text.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _loading ? null : _clearTVBox,
+                                child: const Text('清除订阅'),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _tvboxUrl,
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const SectionHeader(title: '网盘分享链接直解'),
+                GroupCard(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextField(
+                            controller: _link,
                             decoration: const InputDecoration(
-                              hintText: '输入订阅 JSON 地址 (http/https)',
+                              labelText: '粘贴夸克 / UC 网盘分享链接',
+                              hintText:
+                                  'https://pan.quark.cn/s/xxxx 或 https://drive.uc.cn/s/xxxx',
                               border: OutlineInputBorder(),
                               isDense: true,
                             ),
+                            maxLines: 1,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                          onPressed: _loading ? null : _subscribeTVBox,
-                          child: const Text('同步'),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: [
+                              if (widget.store != null)
+                                FilledButton.icon(
+                                  onPressed: _loading ? null : _openDetail,
+                                  icon: const Icon(
+                                    Icons.play_circle_outline_rounded,
+                                  ),
+                                  label: const Text('打开剧集详情页播放'),
+                                ),
+                              FilledButton.tonalIcon(
+                                onPressed: _loading ? null : _parse,
+                                icon: const Icon(Icons.search_rounded),
+                                label: Text(_loading ? '处理中…' : '解析文件列表'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    if (_tvboxUrl.text.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: _loading ? null : _clearTVBox,
-                          child: const Text('清除订阅'),
+                    if (_episodes.isNotEmpty) const Divider(height: 1),
+                    for (var i = 0; i < _episodes.length; i++) ...[
+                      if (i > 0) const Divider(height: 1, indent: 52),
+                      ListTile(
+                        dense: true,
+                        leading: Text('${i + 1}'),
+                        title: Text(
+                          '${_episodes[i]['name'] ?? ''}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        subtitle: Text(_sizeText(_episodes[i]['size'])),
+                        trailing: const Icon(Icons.play_arrow_rounded),
+                        onTap: () => _play(i),
                       ),
                     ],
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const SectionHeader(title: '网盘分享链接直解'),
-          GroupCard(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _link,
-                      decoration: const InputDecoration(
-                        labelText: '粘贴夸克 / UC 网盘分享链接',
-                        hintText:
-                            'https://pan.quark.cn/s/xxxx 或 https://drive.uc.cn/s/xxxx',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      maxLines: 1,
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      children: [
-                        if (widget.store != null)
-                          FilledButton.icon(
-                            onPressed: _loading ? null : _openDetail,
-                            icon: const Icon(Icons.play_circle_outline_rounded),
-                            label: const Text('打开剧集详情页播放'),
-                          ),
-                        FilledButton.tonalIcon(
-                          onPressed: _loading ? null : _parse,
-                          icon: const Icon(Icons.search_rounded),
-                          label: Text(_loading ? '处理中…' : '解析文件列表'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (_episodes.isNotEmpty) const Divider(height: 1),
-              for (var i = 0; i < _episodes.length; i++) ...[
-                if (i > 0) const Divider(height: 1, indent: 52),
-                ListTile(
-                  dense: true,
-                  leading: Text('${i + 1}'),
-                  title: Text(
-                    '${_episodes[i]['name'] ?? ''}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(_sizeText(_episodes[i]['size'])),
-                  trailing: const Icon(Icons.play_arrow_rounded),
-                  onTap: () => _play(i),
-                ),
               ],
-            ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -581,11 +633,15 @@ class _QrDialog extends StatefulWidget {
 
 class _QrDialogState extends State<_QrDialog> {
   Timer? _timer;
+  late final Uint8List _bytes;
+  var _polling = false;
+  var _closed = false;
   String _hint = '用夸克 App 扫码并确认登录';
 
   @override
   void initState() {
     super.initState();
+    _bytes = Uint8List.fromList(base64Decode(widget.png));
     _timer = Timer.periodic(const Duration(seconds: 3), (_) => _poll());
   }
 
@@ -596,11 +652,14 @@ class _QrDialogState extends State<_QrDialog> {
   }
 
   Future<void> _poll() async {
+    if (_polling || _closed) return;
+    _polling = true;
     try {
       final state = await widget.repo.netdiskLoginPoll(widget.session);
       final status = state['status'] as String? ?? '';
-      if (!mounted) return;
+      if (!mounted || _closed) return;
       if (status == 'done') {
+        _closed = true;
         _timer?.cancel();
         Navigator.of(context).pop(true);
         return;
@@ -615,21 +674,25 @@ class _QrDialogState extends State<_QrDialog> {
       }
     } catch (_) {
       // 轮询失败不打断，下一轮继续。
+    } finally {
+      _polling = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bytes = base64Decode(widget.png);
+    final screen = MediaQuery.sizeOf(context);
+    final qrSize = (screen.shortestSide * 0.56).clamp(160.0, 240.0);
     return AlertDialog(
+      scrollable: true,
       title: const Text('扫码登录夸克网盘'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 240,
-            height: 240,
-            child: Image.memory(Uint8List.fromList(bytes), fit: BoxFit.contain),
+            width: qrSize,
+            height: qrSize,
+            child: Image.memory(_bytes, fit: BoxFit.contain),
           ),
           const SizedBox(height: 12),
           Text(_hint, textAlign: TextAlign.center),
@@ -638,6 +701,7 @@ class _QrDialogState extends State<_QrDialog> {
       actions: [
         TextButton(
           onPressed: () {
+            _closed = true;
             _timer?.cancel();
             Navigator.of(context).pop(false);
           },

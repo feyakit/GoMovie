@@ -113,9 +113,16 @@ class SourceBar extends StatelessWidget {
           children: [
             ?televisionLeading,
             const Spacer(),
-            Text(
-              source,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            Flexible(
+              child: Text(
+                source,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
             Builder(
               builder: (anchor) => BarButton(
@@ -162,12 +169,12 @@ class _SourceSwitcherPill extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: AppTheme.brandGradient,
+                      gradient: AppTheme.gradientFor(colors),
                       shape: BoxShape.circle,
                     ),
-                    child: SizedBox(width: 8, height: 8),
+                    child: const SizedBox(width: 8, height: 8),
                   ),
                   const SizedBox(width: 8),
                   Flexible(

@@ -40,11 +40,11 @@ class PlayerBoostBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 32,
-    padding: const EdgeInsets.symmetric(horizontal: 14),
+    constraints: const BoxConstraints(minHeight: 32),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
     decoration: BoxDecoration(
       color: Colors.black.withValues(alpha: .55),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(999),
       border: Border.all(color: Colors.white.withValues(alpha: .12)),
     ),
     child: Row(
@@ -74,43 +74,56 @@ class PlayerStreakBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final forward = streak > 0;
     return IgnorePointer(
-      child: Align(
-        alignment: forward ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          width: 156,
-          height: 220,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: .14),
-            borderRadius: forward
-                ? const BorderRadius.horizontal(left: Radius.circular(110))
-                : const BorderRadius.horizontal(right: Radius.circular(110)),
-            border: Border.all(color: Colors.white.withValues(alpha: .12)),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 6,
-              children: [
-                Icon(
-                  forward
-                      ? Icons.fast_forward_rounded
-                      : Icons.fast_rewind_rounded,
-                  size: 32,
-                  color: Colors.white,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxHeight = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : 220.0;
+          final maxWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 360.0;
+          final height = maxHeight < 220 ? maxHeight : 220.0;
+          final width = (maxWidth * 0.38).clamp(96.0, 156.0);
+          final radius = height / 2;
+          return Align(
+            alignment: forward ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .14),
+                borderRadius: forward
+                    ? BorderRadius.horizontal(left: Radius.circular(radius))
+                    : BorderRadius.horizontal(right: Radius.circular(radius)),
+                border: Border.all(color: Colors.white.withValues(alpha: .12)),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 6,
+                  children: [
+                    Icon(
+                      forward
+                          ? Icons.fast_forward_rounded
+                          : Icons.fast_rewind_rounded,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                    Text(
+                      '${forward ? '+' : '-'}${streak.abs() * 10} 秒',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${forward ? '+' : '-'}${streak.abs() * 10} 秒',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    shadows: [Shadow(color: Colors.black54, blurRadius: 6)],
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

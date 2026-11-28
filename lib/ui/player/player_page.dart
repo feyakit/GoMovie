@@ -396,6 +396,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   Widget _episodeList() => EpisodeGrid(
     episodes: _episodes,
     current: _playback.index,
+    touch: _touch,
     selecting: _selecting,
     selected: _selected,
     onSelectionChanged: () => setState(() {}),

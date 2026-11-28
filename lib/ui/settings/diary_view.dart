@@ -102,7 +102,12 @@ class _DiaryViewState extends State<DiaryView> {
                 );
               }
               return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  16 + MediaQuery.paddingOf(context).bottom,
+                ),
                 child: Focus(
                   onFocusChange: (focused) =>
                       setState(() => _focused = focused),

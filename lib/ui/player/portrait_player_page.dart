@@ -103,6 +103,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
     _seekTimer?.cancel();
     _idleTimer?.cancel();
     _tapTimer?.cancel();
+    if (_holding) _session.endBoost();
     if (_immersive) {
       unawaited(
         SystemChrome.setEnabledSystemUIMode(
@@ -178,7 +179,8 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
       _tapTimer!.cancel();
       final x = details.localPosition.dx;
       final duration = _session.player.state.duration;
-      if (_session.ready &&
+      if (_session.store.playbackPreferences.doubleTapSeek &&
+          _session.ready &&
           duration > Duration.zero &&
           (x < width / 4 || x > width * 3 / 4)) {
         final step = x < width / 4 ? -10 : 10;
@@ -648,7 +650,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
               key: const ValueKey('gestures'),
               session: session,
               enabled: !_pinching && !_session.locked,
-              levels: true,
+              levels: false,
               child: LayoutBuilder(
                 builder: (context, constraints) => GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -703,10 +705,16 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
     final session = _session;
     final live = MediaQuery.paddingOf(context);
     final padding = _bars = EdgeInsets.only(
-      top: math.max(_bars.top, live.top),
-      bottom: math.max(_bars.bottom, live.bottom),
+      left: live.left,
+      right: live.right,
+      top: live.top > 0 ? live.top : _bars.top,
+      bottom: live.bottom > 0 ? live.bottom : _bars.bottom,
     );
     final bottom = padding.bottom;
+    final left = padding.left;
+    final right = padding.right;
+    final headerHeight = (MediaQuery.textScalerOf(context).scale(28) + 28)
+        .clamp(56.0, 84.0);
     final locked = session.boostLocked;
     _syncSystemBars();
     return Stack(
@@ -816,15 +824,15 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
           ),
         Positioned(
           key: const ValueKey('header'),
-          left: 4,
-          right: 12,
+          left: left + 4,
+          right: right + 12,
           top: padding.top,
-          height: 56,
+          height: headerHeight,
           child: _chrome(_header()),
         ),
         Positioned(
-          left: 0,
-          right: 0,
+          left: left,
+          right: right,
           bottom: bottom + 140,
           child: FadePresence(
             scaleFrom: .9,
@@ -837,16 +845,16 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
         ),
         Positioned(
           key: const ValueKey('progress'),
-          left: 16,
-          right: 16,
+          left: left + 16,
+          right: right + 16,
           bottom: bottom + 60,
           height: 32,
           child: _chrome(_progress(context)),
         ),
         Positioned(
           key: const ValueKey('episodes'),
-          left: 16,
-          right: widget.onFullscreen == null ? 16 : 68,
+          left: left + 16,
+          right: right + (widget.onFullscreen == null ? 16 : 68),
           bottom: bottom + 16,
           height: 44,
           child: _chrome(_episodeStrip()),
@@ -854,7 +862,7 @@ class _PortraitPlayerPageState extends State<PortraitPlayerPage>
         if (widget.onFullscreen case final onFullscreen?)
           Positioned(
             key: const ValueKey('fullscreen'),
-            right: 16,
+            right: right + 16,
             bottom: bottom + 16,
             width: 44,
             height: 44,
@@ -1278,13 +1286,23 @@ class _EpisodeSheetState extends State<_EpisodeSheet> {
                       child: Text(
                         '已选 ${_selected.length} 集',
                         style: sheetTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: const Size(0, 40),
+                      ),
                       onPressed: () => _select(false),
                       child: const Text('取消'),
                     ),
                     TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: const Size(0, 40),
+                      ),
                       onPressed: () => setState(() {
                         all
                             ? _selected.clear()
@@ -1295,6 +1313,10 @@ class _EpisodeSheetState extends State<_EpisodeSheet> {
                       child: Text(all ? '取消全选' : '全选'),
                     ),
                     FilledButton(
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        minimumSize: const Size(0, 40),
+                      ),
                       onPressed: _selected.isEmpty
                           ? null
                           : () {

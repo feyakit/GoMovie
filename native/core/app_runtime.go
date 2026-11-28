@@ -406,7 +406,7 @@ func nativeDispatch(input nativeInput) (any, error) {
 	case "netdiskOpenShare":
 		return engine.netdiskOpenShare(ctx, input.URL)
 	case "netdiskCleanup":
-		return engine.netdiskCleanup(ctx)
+		return engine.netdiskCleanup(ctx, input.Source)
 	case "tvboxStatus":
 		return engine.tvboxStatus(), nil
 	case "tvboxSubscribe":

@@ -126,6 +126,12 @@ class _FocusOutlineLayerState extends State<FocusOutlineLayer> {
   final _shown = ValueNotifier<_Outline?>(null);
 
   @override
+  void dispose() {
+    _shown.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) => _OutlineScope(
     shown: _shown,
     area: context,

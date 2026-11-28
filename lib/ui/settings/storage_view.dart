@@ -43,7 +43,7 @@ class _StorageViewState extends State<StorageView> {
   }
 
   Future<void> _refresh() async {
-    if (!widget.store.canDownload) return;
+    if (!mounted || !widget.store.canDownload) return;
     try {
       final info = await AppScope.of(context).repository.storage();
       if (mounted) {

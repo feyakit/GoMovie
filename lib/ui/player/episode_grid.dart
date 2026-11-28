@@ -278,17 +278,18 @@ class _EpisodeGridState extends State<EpisodeGrid> {
       final descriptive = entries.any(
         (e) => e.label.length > 4 || RegExp(r'[^0-9]').hasMatch(e.label),
       );
-      _activeCellHeight = descriptive ? _descriptiveCellHeight : _cellHeight;
+      final scaler = MediaQuery.textScalerOf(context);
+      _activeCellHeight = descriptive
+          ? (scaler.scale(13) * 2.4 + 20).clamp(_descriptiveCellHeight, 78.0)
+          : (scaler.scale(14) + 28).clamp(_cellHeight, 64.0);
       final effectiveMinWidth =
-          widget.minCellWidth ?? (descriptive ? 148.0 : null);
-      _columns = switch (effectiveMinWidth) {
-        null => 5,
-        final minimum => max(
-          1,
-          ((_gridWidth - widget.inset * 2 + _cellGap) / (minimum + _cellGap))
-              .floor(),
-        ),
-      };
+          widget.minCellWidth ?? (descriptive ? 148.0 : 56.0);
+      _columns = max(
+        widget.minCellWidth != null || descriptive ? 1 : 4,
+        ((_gridWidth - widget.inset * 2 + _cellGap) /
+                (effectiveMinWidth + _cellGap))
+            .floor(),
+      ).clamp(1, descriptive ? 6 : 8);
       if (_revealed != widget.current) {
         final animate = _revealed >= 0;
         _revealed = widget.current;
@@ -359,7 +360,7 @@ class _EpisodeGridState extends State<EpisodeGrid> {
               child: KeyedSubtree(
                 key: _routeBarKey,
                 child: SizedBox(
-                  height: 42,
+                  height: (scaler.scale(13) + 28).clamp(42.0, 62.0),
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: EdgeInsets.fromLTRB(

@@ -73,6 +73,7 @@ class _PasswordDialogState extends State<_PasswordDialog>
 
   @override
   Widget build(BuildContext context) => AlertDialog(
+    scrollable: true,
     title: Text(widget.title),
     content: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 352),

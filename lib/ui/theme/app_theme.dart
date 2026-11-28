@@ -427,10 +427,18 @@ abstract final class AppTheme {
     return theme.copyWith(
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       focusColor: colors.primary.withValues(alpha: 0.16),
-      iconButtonTheme: IconButtonThemeData(style: button),
-      filledButtonTheme: FilledButtonThemeData(style: button),
-      outlinedButtonTheme: OutlinedButtonThemeData(style: button),
-      textButtonTheme: TextButtonThemeData(style: button),
+      iconButtonTheme: IconButtonThemeData(
+        style: button.merge(theme.iconButtonTheme.style),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: button.merge(theme.filledButtonTheme.style),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: button.merge(theme.outlinedButtonTheme.style),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: button.merge(theme.textButtonTheme.style),
+      ),
     );
   }
 }

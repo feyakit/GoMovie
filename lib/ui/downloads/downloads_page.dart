@@ -702,7 +702,12 @@ class _DownloadsPageState extends State<DownloadsPage>
         ? 16.0
         : 24.0;
     return ListView.separated(
-      padding: EdgeInsets.fromLTRB(inset, 12, inset, 32),
+      padding: EdgeInsets.fromLTRB(
+        inset,
+        12,
+        inset,
+        32 + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: tasks.length,
       separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) => _MergeRow(
@@ -714,7 +719,17 @@ class _DownloadsPageState extends State<DownloadsPage>
   }
 
   (int, double, double) _grid(BuildContext context, double width) {
-    if (AppScope.formFactorOf(context) == FormFactor.phone) return (3, 10, 20);
+    if (AppScope.formFactorOf(context) == FormFactor.phone) {
+      return (
+        width < 330
+            ? 2
+            : width >= 480
+            ? 4
+            : 3,
+        10,
+        20,
+      );
+    }
     final desktop = AppScope.formFactorOf(context) == FormFactor.window;
     final minimum = desktop ? 140.0 : 120.0;
     final gap = desktop ? 18.0 : 16.0;
@@ -875,9 +890,10 @@ class _JobRow extends StatelessWidget {
                         spacing: 6,
                         children: [
                           Row(
-                            spacing: 8,
+                            spacing: 6,
                             children: [
                               Flexible(
+                                flex: 2,
                                 child: Text(
                                   job.drama.title,
                                   maxLines: 1,
@@ -888,14 +904,22 @@ class _JobRow extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              Text(
-                                '第 ${job.episode.number} 集',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: colors.onSurfaceVariant,
+                              Flexible(
+                                flex: 0,
+                                child: Text(
+                                  '第 ${job.episode.number} 集',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: colors.onSurfaceVariant,
+                                  ),
                                 ),
                               ),
-                              SourceTag(job.drama.source),
+                              Flexible(
+                                flex: 0,
+                                child: SourceTag(job.drama.source),
+                              ),
                             ],
                           ),
                           LinearProgressIndicator(

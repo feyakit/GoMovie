@@ -123,40 +123,58 @@ class DramaCover extends StatelessWidget {
                 ),
               ),
             ),
-          if (details && (drama.badge.isNotEmpty || drama.episodes > 0))
+          if (details &&
+              (drama.badge.isNotEmpty ||
+                  drama.episodes > 0 ||
+                  (showScore && drama.score.isNotEmpty)))
             Positioned(
-              left: 9,
-              right: showScore && drama.score.isNotEmpty ? 46 : 9,
-              bottom: 8,
-              child: Text(
-                drama.badge.isNotEmpty ? drama.badge : '共 ${drama.episodes} 集',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: showScore && drama.score.isNotEmpty
-                    ? TextAlign.start
-                    : TextAlign.end,
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
-          if (details && showScore && drama.score.isNotEmpty)
-            Positioned(
+              left: 8,
               right: 8,
               bottom: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xA6000000),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '★ ${drama.score}',
-                  style: const TextStyle(
-                    color: Color(0xFFFFC542),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    height: 1.2,
-                  ),
-                ),
+              child: Row(
+                spacing: 6,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (drama.badge.isNotEmpty || drama.episodes > 0)
+                    Expanded(
+                      child: Text(
+                        drama.badge.isNotEmpty
+                            ? drama.badge
+                            : '共 ${drama.episodes} 集',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: showScore && drama.score.isNotEmpty
+                            ? TextAlign.start
+                            : TextAlign.end,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                        ),
+                      ),
+                    )
+                  else
+                    const Spacer(),
+                  if (showScore && drama.score.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xA6000000),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '★ ${drama.score}',
+                        style: const TextStyle(
+                          color: Color(0xFFFFC542),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
           if (details && drama.vip)
@@ -216,14 +234,14 @@ class RankBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final top = rank <= 3;
+    final colors = Theme.of(context).colorScheme;
     return Container(
-      constraints: const BoxConstraints(minWidth: 28),
-      height: 26,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 26),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: top ? null : const Color(0x8C000000),
-        gradient: top ? AppTheme.brandGradient : null,
+        gradient: top ? AppTheme.gradientFor(colors) : null,
         borderRadius: const BorderRadius.only(bottomRight: Radius.circular(10)),
       ),
       child: Text(
@@ -284,7 +302,9 @@ class _CoverImageState extends State<CoverImage> {
       widget.repository.catalogUpdates.addListener(_metadataChanged);
     }
     if (oldWidget.repository != widget.repository ||
-        oldWidget.drama.source != widget.drama.source) {
+        oldWidget.drama.source != widget.drama.source ||
+        oldWidget.drama.id != widget.drama.id ||
+        oldWidget.drama.cover != widget.drama.cover) {
       _failed = _retryOnFailure = false;
       _failedPath = null;
       _revision = widget.repository.catalogUpdates.coverRevision(

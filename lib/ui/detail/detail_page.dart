@@ -312,8 +312,13 @@ class _DetailPageState extends State<DetailPage> {
     });
   }
 
+  String _coverLoadedFor = '';
+
   /// 解析封面到本地缓存文件，成功后取色。
   Future<void> _loadCover() async {
+    final key = '${widget.drama.source}:${widget.drama.id}';
+    if (_coverLoadedFor == key) return;
+    _coverLoadedFor = key;
     try {
       final path = await AppScope.of(context).repository.cover(widget.drama);
       if (!mounted || path == _coverPath) return;
@@ -354,7 +359,10 @@ class _DetailPageState extends State<DetailPage> {
       }
       if (_curtain) return _transition(widget.drama);
       final form = AppScope.formFactorOf(context);
-      if (_coverPath.isEmpty) unawaited(_loadCover());
+      final coverKey = '${widget.drama.source}:${widget.drama.id}';
+      if (_coverPath.isEmpty && _coverLoadedFor != coverKey) {
+        unawaited(_loadCover());
+      }
       if (form == FormFactor.television) return _televisionPage(details);
       final page =
           (form == FormFactor.phone || MediaQuery.sizeOf(context).width < 840)
@@ -544,7 +552,10 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: m.chip + 10,
+                            height:
+                                (MediaQuery.textScalerOf(context).scale(13) +
+                                        28)
+                                    .clamp(m.chip + 10, 64.0),
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
@@ -571,7 +582,10 @@ class _DetailPageState extends State<DetailPage> {
                       if (scope.groupCount > 1)
                         SliverToBoxAdapter(
                           child: SizedBox(
-                            height: m.chip + 4,
+                            height:
+                                (MediaQuery.textScalerOf(context).scale(13) +
+                                        24)
+                                    .clamp(m.chip + 4, 60.0),
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -584,7 +598,12 @@ class _DetailPageState extends State<DetailPage> {
                           ),
                         ),
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          10,
+                          16,
+                          24 + MediaQuery.paddingOf(context).bottom,
+                        ),
                         sliver: SliverToBoxAdapter(
                           child: _swipeGroups(details, m, scope: scope),
                         ),
@@ -797,59 +816,63 @@ class _DetailPageState extends State<DetailPage> {
               colors: [surface.withValues(alpha: .15), surface],
             ),
           ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x73000000),
-                          blurRadius: 32,
-                          offset: Offset(0, 14),
-                        ),
-                      ],
-                    ),
-                    child: Builder(
-                      builder: (context) {
-                        final coverWidth =
-                            (MediaQuery.sizeOf(context).width * 0.46).clamp(
-                              132.0,
-                              188.0,
-                            );
-                        return SizedBox(
-                          width: coverWidth,
-                          height: coverWidth * 1.5,
-                          child: DramaCover(
-                            drama: drama,
-                            radius: 18,
-                            details: false,
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x73000000),
+                            blurRadius: 32,
+                            offset: Offset(0, 14),
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          final size = MediaQuery.sizeOf(context);
+                          final coverWidth = math
+                              .min(size.width * 0.46, size.height * 0.28)
+                              .clamp(108.0, 188.0);
+                          return SizedBox(
+                            width: coverWidth,
+                            height: coverWidth * 1.5,
+                            child: DramaCover(
+                              drama: drama,
+                              radius: 18,
+                              details: false,
+                            ),
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    drama.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(height: 24),
+                    Text(
+                      drama.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  const SizedBox.square(
-                    dimension: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  ),
-                ],
+                    const SizedBox(height: 18),
+                    const SizedBox.square(
+                      dimension: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

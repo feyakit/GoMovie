@@ -74,46 +74,59 @@ class _LetterKeyboardState extends State<_LetterKeyboard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final screen = MediaQuery.sizeOf(context);
+    final compact = screen.width < 680;
+    final bodyHeight = (screen.height * 0.56).clamp(220.0, 328.0);
     return Dialog(
-      child: SizedBox(
-        width: 720,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: 12,
-            children: [
-              Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                alignment: Alignment.centerLeft,
-                decoration: BoxDecoration(
-                  color: colors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Text(
-                  _text.isEmpty ? '输入剧名拼音首字母，例如 BDZC' : _text,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: _text.isEmpty ? colors.onSurfaceVariant : null,
-                    letterSpacing: _text.isEmpty ? null : 2,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(compact ? 16 : 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 12,
+              children: [
+                Container(
+                  constraints: const BoxConstraints(minHeight: 48),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  alignment: Alignment.centerLeft,
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    _text.isEmpty ? '输入剧名拼音首字母，例如 BDZC' : _text,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: _text.isEmpty ? colors.onSurfaceVariant : null,
+                      letterSpacing: _text.isEmpty ? null : 2,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                height: 328,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  spacing: 20,
-                  children: [
-                    SizedBox(width: 360, child: _keyboard()),
-                    Expanded(child: _results(theme)),
-                  ],
-                ),
-              ),
-            ],
+                if (compact) ...[
+                  SizedBox(height: bodyHeight, child: _keyboard()),
+                  SizedBox(height: 180, child: _results(theme)),
+                ] else
+                  SizedBox(
+                    height: bodyHeight,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: 20,
+                      children: [
+                        Flexible(flex: 5, child: _keyboard()),
+                        Expanded(flex: 4, child: _results(theme)),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

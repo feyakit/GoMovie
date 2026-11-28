@@ -76,7 +76,15 @@ class _SliderTileState extends State<SliderTile> {
                   ],
                 ),
               ),
-              label,
+              Flexible(
+                flex: 0,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width * 0.36,
+                  ),
+                  child: label,
+                ),
+              ),
             ],
           ),
           SizedBox(
@@ -103,11 +111,8 @@ class _SliderTileState extends State<SliderTile> {
                     onChanged: (next) => setState(() => _draft = next),
                     onChangeEnd: (next) {
                       _dragging = false;
-                      if (next == widget.value) {
-                        setState(() => _draft = null);
-                      } else {
-                        widget.onChanged(next);
-                      }
+                      setState(() => _draft = null);
+                      if (next != widget.value) widget.onChanged(next);
                     },
                   ),
                 ),

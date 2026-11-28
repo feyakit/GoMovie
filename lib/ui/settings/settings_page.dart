@@ -23,7 +23,12 @@ void openUsers(BuildContext context, LocalStore store) => openPage<void>(
   (context) => Scaffold(
     appBar: AppBar(title: const Text('用户')),
     body: ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         UsersView(
           store: store,
@@ -67,7 +72,12 @@ class _ProxySettingsPageState extends State<_ProxySettingsPage> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(SettingsGroup.proxy.label)),
     body: ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        8,
+        16,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       children: [
         SettingsSection(
           group: SettingsGroup.proxy,

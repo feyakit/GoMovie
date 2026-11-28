@@ -30,11 +30,13 @@ Future<void> showPlayerSheet(
   Color? barrierColor,
 }) {
   final theme = dark ? playerTheme(context) : Theme.of(context);
-  final height = MediaQuery.sizeOf(context).height * .6;
+  final size = MediaQuery.sizeOf(context);
+  final height = size.height * (size.width > size.height ? .85 : .6);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
+    useSafeArea: true,
     barrierColor: barrierColor,
     backgroundColor: theme.colorScheme.surfaceContainerLow,
     shape: RoundedRectangleBorder(
@@ -61,11 +63,11 @@ class SheetHeader extends StatelessWidget {
   final List<Widget> children;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: 48,
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 48),
     child: Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 8, 0),
-      child: Row(spacing: 8, children: children),
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+      child: Row(spacing: 6, children: children),
     ),
   );
 }
@@ -89,7 +91,14 @@ class PlaybackSettings extends StatelessWidget {
     children: [
       SheetHeader(
         children: [
-          const Expanded(child: Text('播放设置', style: sheetTitle)),
+          const Expanded(
+            child: Text(
+              '播放设置',
+              style: sheetTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.close_rounded),
@@ -140,8 +149,9 @@ class PlaybackSettingsList extends StatelessWidget {
     builder: (context, _) {
       final colors = Theme.of(context).colorScheme;
       final label = TextStyle(fontSize: 14, color: colors.onSurfaceVariant);
+      final bottom = MediaQuery.paddingOf(context).bottom;
       return ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + bottom),
         children: [
           Text('倍速', style: label),
           const SizedBox(height: 10),

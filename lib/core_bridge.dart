@@ -147,7 +147,9 @@ abstract class AppRepository {
       throw AppFailure('当前环境不支持网盘播放');
   Future<Drama> netdiskOpenShare(String url) async =>
       throw AppFailure('当前环境不支持网盘分享');
-  Future<Map<String, dynamic>> netdiskCleanup() async => const {};
+  Future<Map<String, dynamic>> netdiskCleanup({
+    String provider = 'quark',
+  }) async => const {};
   Future<Map<String, dynamic>> tvboxStatus() async => const {};
   Future<Map<String, dynamic>> tvboxSubscribe(String url) async =>
       throw AppFailure('当前环境不支持订阅接口');
@@ -933,8 +935,9 @@ class NativeRepository extends AppRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> netdiskCleanup() async =>
-      await _call({'action': 'netdiskCleanup'});
+  Future<Map<String, dynamic>> netdiskCleanup({
+    String provider = 'quark',
+  }) async => await _call({'action': 'netdiskCleanup', 'source': provider});
 
   @override
   Future<Map<String, dynamic>> tvboxStatus() async =>

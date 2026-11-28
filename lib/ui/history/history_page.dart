@@ -478,7 +478,15 @@ class _HistoryPageState extends State<HistoryPage> {
   (int, double, double) _grid(BuildContext context, double width) {
     switch (AppScope.formFactorOf(context)) {
       case FormFactor.phone:
-        return (3, 10, 20);
+        return (
+          width < 330
+              ? 2
+              : width >= 480
+              ? 4
+              : 3,
+          10,
+          20,
+        );
       case FormFactor.television:
         return (6, 20, 24);
       case FormFactor.pad || FormFactor.window:
@@ -598,7 +606,9 @@ class _HistoryPageState extends State<HistoryPage> {
             ],
           SliverPadding(
             padding: EdgeInsets.only(
-              bottom: AppScope.of(context).television ? 27 : 32,
+              bottom:
+                  (AppScope.of(context).television ? 27 : 32) +
+                  MediaQuery.paddingOf(context).bottom,
             ),
           ),
         ],

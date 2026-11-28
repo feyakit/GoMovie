@@ -65,10 +65,17 @@ class SettingsTile extends StatelessWidget {
                     spacing: 4,
                     children: [
                       if (value case final value?)
-                        Text(
-                          value,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(color: colors.onSurfaceVariant),
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width * 0.36,
+                          ),
+                          child: Text(
+                            value,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: colors.onSurfaceVariant),
+                          ),
                         ),
                       if (onTap != null)
                         Icon(
@@ -100,8 +107,8 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: padding,
-    child: SizedBox(
-      height: 40,
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 40),
       child: Row(
         children: [
           Expanded(
@@ -109,6 +116,8 @@ class SectionHeader extends StatelessWidget {
               header: true,
               child: Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,

@@ -283,7 +283,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
     }
     if (_tapTimer?.isActive ?? false) {
       _tapTimer!.cancel();
-      if (side == 0) {
+      if (side == 0 || !_session.store.playbackPreferences.doubleTapSeek) {
         _session.togglePlayback();
       } else {
         _startStreak(side);
@@ -495,7 +495,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         SwipeControls(
           session: session,
           enabled: !locked,
-          levels: true,
+          levels: session.store.playbackPreferences.swipeLevels,
           episodes: false,
           child: LayoutBuilder(
             builder: (context, constraints) => GestureDetector(
@@ -761,6 +761,14 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
     final padding = MediaQuery.viewPaddingOf(context);
     final left = math.max(padding.left, 20.0);
     final right = math.max(padding.right, 20.0);
+    final bottomInset = padding.bottom;
+    final availableWidth = (MediaQuery.sizeOf(context).width - left - right)
+        .clamp(0.0, 4000.0);
+    final headerHeight = (MediaQuery.textScalerOf(context).scale(28) + 28)
+        .clamp(56.0, 84.0);
+    final compactTop = availableWidth < 540;
+    final showSkips = availableWidth >= 520;
+    final showFit = availableWidth >= 440;
     const shadow = [Shadow(color: Color(0x66000000), blurRadius: 2)];
     final ready = session.ready;
     return Stack(
@@ -790,7 +798,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
           left: left,
           right: right,
           top: 8,
-          height: 56,
+          height: headerHeight,
           child: Row(
             children: [
               _icon(Icons.arrow_back_rounded, '退出全屏', () => _rotate(true)),
@@ -813,6 +821,8 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
                     ),
                     Text(
                       '第 ${session.episode.number} 集',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: .78),
                         fontSize: 12,
@@ -830,32 +840,34 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
                 size: 22,
                 extent: 44,
               ),
-              const SizedBox(width: 8),
-              if (preferences.showNetworkSpeed) ...[
-                NetworkSpeedText(
-                  session: session,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: .78),
-                    fontSize: 12,
-                    fontFeatures: const [FontFeature.tabularFigures()],
+              if (!compactTop) ...[
+                const SizedBox(width: 8),
+                if (preferences.showNetworkSpeed) ...[
+                  NetworkSpeedText(
+                    session: session,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: .78),
+                      fontSize: 12,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-              ],
-              if (_battery case final battery?) ...[
-                _batteryMark(battery),
-                const SizedBox(width: 12),
-              ],
-              if (preferences.showClock)
-                Text(
-                  '${_two(_now.hour)}:${_two(_now.minute)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: [FontFeature.tabularFigures()],
+                  const SizedBox(width: 12),
+                ],
+                if (_battery case final battery?) ...[
+                  _batteryMark(battery),
+                  const SizedBox(width: 12),
+                ],
+                if (preferences.showClock)
+                  Text(
+                    '${_two(_now.hour)}:${_two(_now.minute)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
                   ),
-                ),
+              ],
               const SizedBox(width: 4),
               if (session.danmakuSupported) _danmakuButton(context),
               if (widget.onMiniWindow case final onMiniWindow?)
@@ -871,35 +883,37 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
         Positioned(
           left: left + 8,
           right: right + 8,
-          bottom: 60,
+          bottom: bottomInset + 60,
           height: 28,
           child: _progress(context, thumb: 8),
         ),
         Positioned(
           left: left,
           right: right,
-          bottom: 8,
+          bottom: bottomInset + 8,
           height: 48,
           child: Row(
             children: [
               _playButton(size: 44, iconSize: 30),
               const SizedBox(width: 4),
-              _clock(13),
-              const SizedBox(width: 8),
-              _icon(
-                Icons.skip_previous_rounded,
-                '上一集',
-                session.hasPrevious
-                    ? () => unawaited(session.previous())
-                    : null,
-                iconSize: 28,
-              ),
-              _icon(
-                Icons.skip_next_rounded,
-                '下一集',
-                session.hasNext ? () => unawaited(session.next()) : null,
-                iconSize: 28,
-              ),
+              Flexible(child: _clock(13)),
+              if (showSkips) ...[
+                const SizedBox(width: 8),
+                _icon(
+                  Icons.skip_previous_rounded,
+                  '上一集',
+                  session.hasPrevious
+                      ? () => unawaited(session.previous())
+                      : null,
+                  iconSize: 28,
+                ),
+                _icon(
+                  Icons.skip_next_rounded,
+                  '下一集',
+                  session.hasNext ? () => unawaited(session.next()) : null,
+                  iconSize: 28,
+                ),
+              ],
               const Spacer(),
               _icon(
                 Icons.playlist_play_rounded,
@@ -926,17 +940,18 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
                   bold: true,
                 ),
               ),
-              CompositedTransformTarget(
-                link: _links[_Panel.fit]!,
-                child: _icon(
-                  Icons.aspect_ratio_rounded,
-                  '画面比例 · ${session.videoFit.label}',
-                  () => _openPanel(_Panel.fit),
-                  color: session.videoFit == VideoFit.auto
-                      ? null
-                      : Theme.of(context).colorScheme.primary,
+              if (showFit)
+                CompositedTransformTarget(
+                  link: _links[_Panel.fit]!,
+                  child: _icon(
+                    Icons.aspect_ratio_rounded,
+                    '画面比例 · ${session.videoFit.label}',
+                    () => _openPanel(_Panel.fit),
+                    color: session.videoFit == VideoFit.auto
+                        ? null
+                        : Theme.of(context).colorScheme.primary,
+                  ),
                 ),
-              ),
               _icon(Icons.fullscreen_exit_rounded, '退出全屏', () => _rotate(true)),
             ],
           ),
@@ -1283,36 +1298,52 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
     required void Function(T) onSelected,
   }) {
     final colors = Theme.of(context).colorScheme;
-    return IntrinsicWidth(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final value in values)
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () {
-                _closePanel();
-                onSelected(value);
-              },
-              child: Container(
-                height: 36,
-                constraints: const BoxConstraints(minWidth: 72),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                alignment: Alignment.center,
-                child: Text(
-                  label(value),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: value == selected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: value == selected ? colors.primary : Colors.white,
+    final maxHeight = (MediaQuery.sizeOf(context).height - 120).clamp(
+      120.0,
+      320.0,
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SingleChildScrollView(
+        child: IntrinsicWidth(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final value in values)
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    _closePanel();
+                    onSelected(value);
+                  },
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 72,
+                      minHeight: 36,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      label(value),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: value == selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: value == selected
+                            ? colors.primary
+                            : Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }

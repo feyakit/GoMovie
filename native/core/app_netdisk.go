@@ -235,16 +235,23 @@ func (engine *nativeEngine) netdiskPlay(ctx context.Context, raw string, index i
 }
 
 // netdiskCleanup 清理网盘临时转存目录（gomovie_tmp）。
-func (engine *nativeEngine) netdiskCleanup(ctx context.Context) (map[string]any, error) {
+func (engine *nativeEngine) netdiskCleanup(ctx context.Context, provider string) (map[string]any, error) {
 	rt, err := engine.netdiskInit()
 	if err != nil {
 		return nil, err
 	}
-	creds, err := rt.store.Get("quark")
+	if provider != "uc" {
+		provider = "quark"
+	}
+	creds, err := rt.store.Get(provider)
 	if err != nil {
 		return nil, netdisk.ErrNotLoggedIn
 	}
-	deleted, err := netdisk.NewQuark(creds).CleanupTemp(ctx)
+	client := netdisk.NewQuark(creds)
+	if provider == "uc" {
+		client = netdisk.NewUC(creds)
+	}
+	deleted, err := client.CleanupTemp(ctx)
 	if err != nil {
 		return nil, err
 	}

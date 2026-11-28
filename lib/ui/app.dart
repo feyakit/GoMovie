@@ -99,10 +99,9 @@ class _GoMovieAppState extends State<GoMovieApp> with WidgetsBindingObserver {
   KeyEventResult _blockKeyboardFocus(KeyEvent event) {
     if (_television) return KeyEventResult.ignored;
     final key = event.logicalKey;
-    return key == LogicalKeyboardKey.tab ||
-            focusedTextField() == null &&
-                !keyboardControlsFocused() &&
-                _focusKeys.contains(key)
+    return focusedTextField() == null &&
+            !keyboardControlsFocused() &&
+            (key == LogicalKeyboardKey.tab || _focusKeys.contains(key))
         ? KeyEventResult.handled
         : KeyEventResult.ignored;
   }
@@ -355,22 +354,24 @@ class _BootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          spacing: 24,
-          children: [
-            if (error == null) const CircularProgressIndicator(),
-            Text(
-              error ?? '正在打开$appName',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            if (error != null && onRetry != null)
-              FilledButton(onPressed: onRetry, child: const Text('重新打开')),
-          ],
+    body: SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 24,
+            children: [
+              if (error == null) const CircularProgressIndicator(),
+              Text(
+                error ?? '正在打开$appName',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (error != null && onRetry != null)
+                FilledButton(onPressed: onRetry, child: const Text('重新打开')),
+            ],
+          ),
         ),
       ),
     ),

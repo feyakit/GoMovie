@@ -331,6 +331,7 @@ class _WordsDialogState extends State<_WordsDialog> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return AlertDialog(
+      scrollable: true,
       title: const Text('弹幕屏蔽词'),
       content: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),

@@ -152,35 +152,53 @@ class _SeasonStripState extends State<SeasonStrip> {
                   ),
                 ),
               ),
-              const Spacer(),
-              if (widget.collapsed) ...[
-                if (currentLabel != null)
-                  Text(
-                    currentLabel,
-                    style: TextStyle(
-                      fontSize: widget.tagSize,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                Icon(
-                  Icons.expand_more_rounded,
-                  size: 20,
-                  color: colors.onSurfaceVariant,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    if (widget.collapsed) ...[
+                      if (currentLabel != null)
+                        Flexible(
+                          child: Text(
+                            currentLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: widget.tagSize,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        size: 20,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ] else
+                      Flexible(
+                        child: Text(
+                          '左右滑动切换',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: widget.tagSize,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ] else
-                Text(
-                  '左右滑动切换',
-                  style: TextStyle(
-                    fontSize: widget.tagSize,
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
+              ),
             ],
           ),
         ),
         if (!widget.collapsed)
           SizedBox(
-            height: 90,
+            height: (MediaQuery.textScalerOf(context).scale(42) + 48).clamp(
+              90.0,
+              132.0,
+            ),
             child: ListView.separated(
               controller: _scroll,
               scrollDirection: Axis.horizontal,

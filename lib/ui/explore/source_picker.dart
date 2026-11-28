@@ -141,28 +141,35 @@ class _SourcePickerState extends State<SourcePicker> {
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
-                child: SizedBox(
-                  height: 44,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '选择站点',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 48),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '选择站点',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '长按设直连 / 代理 · 共 ${items.length} 个',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontSize: 10.5,
-                              color: colors.onSurfaceVariant,
+                            Text(
+                              '长按设直连 / 代理 · 共 ${items.length} 个',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontSize: 10.5,
+                                color: colors.onSurfaceVariant,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       if (_store.profile.admin)
                         Positioned(

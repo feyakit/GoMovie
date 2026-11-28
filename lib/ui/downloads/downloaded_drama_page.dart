@@ -162,15 +162,21 @@ class _DownloadedDramaPageState extends State<DownloadedDramaPage> {
       ),
     );
     final failures = <String>[];
-    for (final job in jobs) {
-      try {
-        await exportDownload(repository, job, delete: delete);
-        exported.value++;
-      } catch (error) {
-        failures.add('$error');
+    var exportedCount = 0;
+    try {
+      for (final job in jobs) {
+        try {
+          await exportDownload(repository, job, delete: delete);
+          exported.value++;
+        } catch (error) {
+          failures.add('$error');
+        }
       }
+      exportedCount = exported.value;
+    } finally {
+      navigator.pop();
+      exported.dispose();
     }
-    navigator.pop();
     await widget.downloads.refresh();
     messenger.showSnackBar(
       SnackBar(
@@ -182,7 +188,7 @@ class _DownloadedDramaPageState extends State<DownloadedDramaPage> {
       ),
     );
     if (!mounted) return;
-    if (delete && exported.value == item.episodes.length) {
+    if (delete && exportedCount == item.episodes.length) {
       Navigator.pop(context);
     } else {
       setState(() {
@@ -784,14 +790,18 @@ class _EpisodeListState extends State<_EpisodeList> {
               widget.inset,
               _gridTop,
               widget.inset,
-              32,
+              32 + MediaQuery.paddingOf(context).bottom,
             ),
             sliver: SliverGrid.builder(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: _columns,
                 crossAxisSpacing: _cardGap,
                 mainAxisSpacing: _cardGap,
-                mainAxisExtent: _cardHeight,
+                mainAxisExtent:
+                    (MediaQuery.textScalerOf(context).scale(27) + 37).clamp(
+                      _cardHeight,
+                      96.0,
+                    ),
               ),
               itemCount: _episodes.length,
               itemBuilder: (context, index) {
@@ -986,11 +996,15 @@ class _EpisodeCard extends StatelessWidget {
                         Row(
                           spacing: 6,
                           children: [
-                            Text(
-                              '第 ${episode.number} 集',
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                            Flexible(
+                              child: Text(
+                                '第 ${episode.number} 集',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             if (episode.vip) const VipBadge(),

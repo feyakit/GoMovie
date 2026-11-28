@@ -930,6 +930,7 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
         values: sleepChoices,
         selected: sleepChoices.firstWhere(
           (choice) => choice.selected(_session),
+          orElse: () => sleepChoices.first,
         ),
         label: (value) => value.label,
         onSelected: (value) => _change(() async => value.apply(_session)),
@@ -954,34 +955,50 @@ class _PlayerSurfaceState extends State<PlayerSurface> {
     required void Function(T) onSelected,
   }) {
     final colors = Theme.of(context).colorScheme;
-    return IntrinsicWidth(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final value in values)
-            InkWell(
-              borderRadius: BorderRadius.circular(8),
-              hoverColor: Colors.white.withValues(alpha: .14),
-              onTap: () => onSelected(value),
-              child: Container(
-                height: 36,
-                constraints: const BoxConstraints(minWidth: 72),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                alignment: Alignment.center,
-                child: Text(
-                  label(value),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: value == selected
-                        ? FontWeight.w700
-                        : FontWeight.w500,
-                    color: value == selected ? colors.primary : Colors.white,
+    final maxHeight = (MediaQuery.sizeOf(context).height - 120).clamp(
+      120.0,
+      360.0,
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: SingleChildScrollView(
+        child: IntrinsicWidth(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final value in values)
+                InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  hoverColor: Colors.white.withValues(alpha: .14),
+                  onTap: () => onSelected(value),
+                  child: Container(
+                    constraints: const BoxConstraints(
+                      minWidth: 72,
+                      minHeight: 36,
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      label(value),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: value == selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: value == selected
+                            ? colors.primary
+                            : Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
