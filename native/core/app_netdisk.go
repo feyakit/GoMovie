@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"gomovie/native/core/netdisk"
 )
@@ -111,6 +112,42 @@ func (engine *nativeEngine) netdiskLogout(provider string) (bool, error) {
 		provider = "quark"
 	}
 	return true, rt.store.Clear(provider)
+}
+
+func (engine *nativeEngine) netdiskSetCookie(provider, rawCookie string) (bool, error) {
+	rt, err := engine.netdiskInit()
+	if err != nil {
+		return false, err
+	}
+	if provider != "quark" && provider != "uc" {
+		return false, errors.New("不支持的网盘类型")
+	}
+	cookies := make([]netdisk.Cookie, 0)
+	for _, part := range strings.Split(rawCookie, ";") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		name, value, ok := strings.Cut(part, "=")
+		name = strings.TrimSpace(name)
+		value = strings.TrimSpace(value)
+		if !ok || name == "" || value == "" {
+			continue
+		}
+		cookies = append(cookies, netdisk.Cookie{Name: name, Value: value})
+	}
+	creds := &netdisk.Credentials{
+		Provider: provider,
+		Cookies:  cookies,
+		SavedAt:  time.Now().Unix(),
+	}
+	if !netdisk.ProviderReady(creds) {
+		return false, errors.New("Cookie 不完整（缺少 __puus），请从网页端复制完整 Cookie")
+	}
+	if err := rt.store.Put(creds); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (engine *nativeEngine) netdiskClientFor(raw string) (*netdisk.Quark, error) {
@@ -261,13 +298,17 @@ func shareInfoToDrama(source, shareURL string, info *netdisk.ShareInfo) (Drama, 
 		}
 		title = prefix + " (" + info.ShareID + ")"
 	}
+	badge := "夸克网盘"
+	if info.Provider == "uc" {
+		badge = "UC网盘"
+	}
 	drama := Drama{
 		ID:       source + ":" + shareURL,
 		Source:   source,
 		SourceID: shareURL,
 		Title:    title,
 		Desc:     "网盘分享 · 共 " + strconv.Itoa(len(info.Episodes)) + " 集",
-		Badge:    "夸克网盘",
+		Badge:    badge,
 	}
 	chapters := make([]Chapter, 0, len(info.Episodes))
 	for i, ep := range info.Episodes {
@@ -317,14 +358,32 @@ func resolveNetdiskMedia(ctx context.Context, rawVideoURL string) (ProviderMedia
 	if rt == nil || rt.store == nil {
 		return ProviderMedia{}, errors.New("网盘模块尚未初始化")
 	}
-	creds, err := rt.store.Get("quark")
+	provider := netdisk.DetectProvider(shareURL)
+	if provider != "uc" {
+		provider = "quark"
+	}
+	creds, err := rt.store.Get(provider)
 	if err != nil {
+		if provider == "uc" {
+			return ProviderMedia{}, errors.New("UC 网盘未登录，请先在网盘页配置 Cookie")
+		}
 		return ProviderMedia{}, netdisk.ErrNotLoggedIn
 	}
 	if !netdisk.ProviderReady(creds) {
+		if provider == "uc" {
+			return ProviderMedia{}, errors.New("UC 网盘登录态不完整，请重新配置 Cookie")
+		}
 		return ProviderMedia{}, errors.New("网盘登录态不完整，请先扫码登录夸克")
 	}
-	play, err := netdisk.NewQuark(creds).ResolveShare(ctx, shareURL, idx)
+	var client *netdisk.Quark
+	defaultReferer := "https://pan.quark.cn/"
+	if provider == "uc" {
+		client = netdisk.NewUC(creds)
+		defaultReferer = "https://drive.uc.cn/"
+	} else {
+		client = netdisk.NewQuark(creds)
+	}
+	play, err := client.ResolveShare(ctx, shareURL, idx)
 	if err != nil {
 		return ProviderMedia{}, err
 	}
@@ -335,7 +394,7 @@ func resolveNetdiskMedia(ctx context.Context, rawVideoURL string) (ProviderMedia
 	}
 	referer := play.Headers["Referer"]
 	if referer == "" {
-		referer = "https://pan.quark.cn/"
+		referer = defaultReferer
 	}
 	return ProviderMedia{
 		URL:     play.URL,
@@ -368,11 +427,21 @@ func (p *netdiskProvider) Detail(ctx context.Context, sourceID string) (Drama, [
 	netdiskMu.Lock()
 	rt := netdiskRT
 	netdiskMu.Unlock()
+	provider := netdisk.DetectProvider(sourceID)
+	if provider != "uc" {
+		provider = "quark"
+	}
 	var creds *netdisk.Credentials
 	if rt != nil && rt.store != nil {
-		creds, _ = rt.store.Get("quark")
+		creds, _ = rt.store.Get(provider)
 	}
-	info, err := netdisk.NewQuark(creds).Share(ctx, sourceID)
+	var client *netdisk.Quark
+	if provider == "uc" {
+		client = netdisk.NewUC(creds)
+	} else {
+		client = netdisk.NewQuark(creds)
+	}
+	info, err := client.Share(ctx, sourceID)
 	if err != nil {
 		return Drama{}, nil, err
 	}

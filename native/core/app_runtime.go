@@ -395,6 +395,8 @@ func nativeDispatch(input nativeInput) (any, error) {
 		return engine.netdiskLoginPoll(ctx, input.Session)
 	case "netdiskLogout":
 		return engine.netdiskLogout(input.Source)
+	case "netdiskSetCookie":
+		return engine.netdiskSetCookie(input.Source, input.Token)
 	case "netdiskShare":
 		return engine.netdiskShare(ctx, input.URL)
 	case "netdiskPlay":

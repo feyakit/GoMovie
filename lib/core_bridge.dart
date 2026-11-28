@@ -140,6 +140,7 @@ abstract class AppRepository {
   Future<Map<String, dynamic>> netdiskLoginPoll(String session) async =>
       throw AppFailure('当前环境不支持网盘登录');
   Future<void> netdiskLogout(String provider) async {}
+  Future<void> netdiskSetCookie(String provider, String cookie) async {}
   Future<Map<String, dynamic>> netdiskShare(String url) async =>
       throw AppFailure('当前环境不支持网盘分享');
   Future<Map<String, dynamic>> netdiskPlay(String url, int index) async =>
@@ -905,6 +906,15 @@ class NativeRepository extends AppRepository {
   @override
   Future<void> netdiskLogout(String provider) async {
     await _call({'action': 'netdiskLogout', 'source': provider});
+  }
+
+  @override
+  Future<void> netdiskSetCookie(String provider, String cookie) async {
+    await _call({
+      'action': 'netdiskSetCookie',
+      'source': provider,
+      'token': cookie,
+    });
   }
 
   @override
