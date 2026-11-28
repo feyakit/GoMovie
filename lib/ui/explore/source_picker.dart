@@ -220,7 +220,8 @@ class _SourcePickerState extends State<SourcePicker> {
                 ),
               if (groups.where((g) => g.key.isEmpty || g.count > 0).length > 2)
                 SizedBox(
-                  height: 36,
+                  height: (MediaQuery.textScalerOf(context).scale(13) + 22)
+                      .clamp(36.0, 52.0),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -254,13 +255,18 @@ class _SourcePickerState extends State<SourcePicker> {
                         controller: _scroll,
                         shrinkWrap: true,
                         padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              mainAxisExtent: 46,
-                            ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: MediaQuery.sizeOf(context).width < 320
+                              ? 1
+                              : 2,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          mainAxisExtent:
+                              (MediaQuery.textScalerOf(context).scale(14) *
+                                          1.4 +
+                                      24)
+                                  .clamp(46.0, 68.0),
+                        ),
                         itemCount: items.length,
                         itemBuilder: (_, index) {
                           final site = items[index];

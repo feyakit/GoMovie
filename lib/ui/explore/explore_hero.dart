@@ -419,6 +419,11 @@ class _PhoneCarouselHeroState extends State<_PhoneCarouselHero> {
     final active = items[currentIndex];
     final theme = Theme.of(context);
     final surface = theme.colorScheme.surface;
+    final screen = MediaQuery.sizeOf(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final heroHeight =
+        (screen.height * 0.34).clamp(248.0, 320.0) +
+        math.max(0.0, (textScale - 1.0) * 34);
     return Semantics(
       container: true,
       label: widget.kicker,
@@ -429,7 +434,7 @@ class _PhoneCarouselHeroState extends State<_PhoneCarouselHero> {
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: Container(
-              height: 288,
+              height: heroHeight,
               decoration: BoxDecoration(
                 color: _shade,
                 borderRadius: BorderRadius.circular(24),

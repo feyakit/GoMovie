@@ -251,10 +251,13 @@ class _SoraniLoginDialogState extends State<_SoraniLoginDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(_verifying ? '安全验证' : '登录青空'),
-    content: SizedBox(
-      width: 352,
-      child: SingleChildScrollView(
-        child: _verifying ? _verification() : _form(),
+    content: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 352),
+      child: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: _verifying ? _verification() : _form(),
+        ),
       ),
     ),
     actions: [

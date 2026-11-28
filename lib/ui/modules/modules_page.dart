@@ -1204,14 +1204,17 @@ class _FullTextDialogState extends State<_FullTextDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    content: SizedBox(
-      width: 600,
-      child: Focus(
-        autofocus: true,
-        onKeyEvent: (_, event) => _onKey(event),
-        child: SingleChildScrollView(
-          controller: _scroll,
-          child: Text(widget.text),
+    content: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 600),
+      child: SizedBox(
+        width: double.maxFinite,
+        child: Focus(
+          autofocus: true,
+          onKeyEvent: (_, event) => _onKey(event),
+          child: SingleChildScrollView(
+            controller: _scroll,
+            child: Text(widget.text),
+          ),
         ),
       ),
     ),

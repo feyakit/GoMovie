@@ -74,27 +74,30 @@ class _PasswordDialogState extends State<_PasswordDialog>
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(widget.title),
-    content: SizedBox(
-      width: 352,
-      child: AnimatedBuilder(
-        animation: _shake,
-        builder: (context, child) => Transform.translate(
-          offset: Offset(
-            math.sin(_shake.value * math.pi * 4) * 8 * (1 - _shake.value),
-            0,
+    content: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 352),
+      child: SizedBox(
+        width: double.maxFinite,
+        child: AnimatedBuilder(
+          animation: _shake,
+          builder: (context, child) => Transform.translate(
+            offset: Offset(
+              math.sin(_shake.value * math.pi * 4) * 8 * (1 - _shake.value),
+              0,
+            ),
+            child: child,
           ),
-          child: child,
-        ),
-        child: FormTextField(
-          controller: _pin,
-          autofocus: true,
-          obscure: true,
-          enabled: !_busy,
-          onSubmitted: (_) => _submit(),
-          decoration: InputDecoration(
-            labelText: '密码',
-            helperText: widget.helper,
-            errorText: _error,
+          child: FormTextField(
+            controller: _pin,
+            autofocus: true,
+            obscure: true,
+            enabled: !_busy,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: '密码',
+              helperText: widget.helper,
+              errorText: _error,
+            ),
           ),
         ),
       ),

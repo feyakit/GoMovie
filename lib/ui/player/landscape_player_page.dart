@@ -605,7 +605,7 @@ class _LandscapePlayerPageState extends State<LandscapePlayerPage>
           top: 0,
           right: 0,
           bottom: 0,
-          width: 360,
+          width: (MediaQuery.sizeOf(context).width * 0.46).clamp(240.0, 360.0),
           child: FadePresence(
             // A fresh key on every show keeps reopen-during-fade from reusing
             // the closing panel's state, matching the old unmount behavior.

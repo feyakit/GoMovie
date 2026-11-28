@@ -438,7 +438,12 @@ class _DetailPageState extends State<DetailPage> {
             SliverToBoxAdapter(
               child: _withBackdrop(
                 drama,
-                top + 300,
+                top +
+                    290 +
+                    math.max(
+                      0.0,
+                      (MediaQuery.textScalerOf(context).scale(1.0) - 1.0) * 80,
+                    ),
                 Padding(
                   padding: EdgeInsets.fromLTRB(16, top, 16, 0),
                   child: Column(
@@ -809,14 +814,23 @@ class _DetailPageState extends State<DetailPage> {
                         ),
                       ],
                     ),
-                    child: SizedBox(
-                      width: 188,
-                      height: 282,
-                      child: DramaCover(
-                        drama: drama,
-                        radius: 18,
-                        details: false,
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        final coverWidth =
+                            (MediaQuery.sizeOf(context).width * 0.46).clamp(
+                              132.0,
+                              188.0,
+                            );
+                        return SizedBox(
+                          width: coverWidth,
+                          height: coverWidth * 1.5,
+                          child: DramaCover(
+                            drama: drama,
+                            radius: 18,
+                            details: false,
+                          ),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -844,27 +858,32 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) =>
-      DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(m.coverRadius),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x4D000000),
-              blurRadius: 26,
-              offset: Offset(0, 10),
-            ),
-          ],
-        ),
-        child: SizedBox.fromSize(
-          size: m.cover,
-          child: DramaCover(
-            drama: drama,
-            radius: m.coverRadius,
-            heroScope: hero ? 'drama' : null,
+  Widget _cover(Drama drama, DetailMetrics m, {bool hero = true}) {
+    final width = AppScope.formFactorOf(context) == FormFactor.phone
+        ? math.min(m.cover.width, MediaQuery.sizeOf(context).width * 0.31)
+        : m.cover.width;
+    final size = Size(width, width * (m.cover.height / m.cover.width));
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(m.coverRadius),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x4D000000),
+            blurRadius: 26,
+            offset: Offset(0, 10),
           ),
+        ],
+      ),
+      child: SizedBox.fromSize(
+        size: size,
+        child: DramaCover(
+          drama: drama,
+          radius: m.coverRadius,
+          heroScope: hero ? 'drama' : null,
         ),
-      );
+      ),
+    );
+  }
 
   Widget _headline(
     DramaDetails details,
@@ -1776,13 +1795,16 @@ class _DescriptionDialogState extends State<_DescriptionDialog> {
     onKeyEvent: (_, event) => _onKey(event),
     child: AlertDialog(
       title: Text(widget.drama.title),
-      content: SizedBox(
-        width: 560,
-        child: SingleChildScrollView(
-          controller: _scroll,
-          child: Text(
-            widget.drama.description,
-            style: const TextStyle(fontSize: 16, height: 1.7),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            controller: _scroll,
+            child: Text(
+              widget.drama.description,
+              style: const TextStyle(fontSize: 16, height: 1.7),
+            ),
           ),
         ),
       ),

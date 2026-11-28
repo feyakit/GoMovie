@@ -81,7 +81,7 @@ const detailPhoneMetrics = DetailMetrics(
   cellRadius: 12,
   cellText: 16,
   cellGap: 10,
-  columns: 5,
+  cellWidth: 64,
 );
 
 const detailDesktopMetrics = DetailMetrics(
