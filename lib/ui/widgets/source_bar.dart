@@ -54,7 +54,10 @@ class SourceBar extends StatelessWidget {
       FormFactor.phone => Padding(
         padding: const EdgeInsets.fromLTRB(14, 0, 8, 0),
         child: SizedBox(
-          height: 54,
+          height: (MediaQuery.textScalerOf(context).scale(14) + 36).clamp(
+            54.0,
+            72.0,
+          ),
           child: Row(
             children: [
               ...leading,

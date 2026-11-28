@@ -669,16 +669,19 @@ class _ProxyDialogState extends State<_ProxyDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: const Text('代理地址'),
-    content: SizedBox(
-      width: 420,
-      child: FormTextField(
-        controller: _address,
-        autofocus: true,
-        url: true,
-        onSubmitted: (_) => _submit(),
-        decoration: const InputDecoration(
-          hintText: 'http://127.0.0.1:7890',
-          helperText: '支持 HTTP、HTTPS、SOCKS5',
+    content: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: SizedBox(
+        width: double.maxFinite,
+        child: FormTextField(
+          controller: _address,
+          autofocus: true,
+          url: true,
+          onSubmitted: (_) => _submit(),
+          decoration: const InputDecoration(
+            hintText: 'http://127.0.0.1:7890',
+            helperText: '支持 HTTP、HTTPS、SOCKS5',
+          ),
         ),
       ),
     ),

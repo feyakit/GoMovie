@@ -332,69 +332,72 @@ class _WordsDialogState extends State<_WordsDialog> {
     final colors = Theme.of(context).colorScheme;
     return AlertDialog(
       title: const Text('弹幕屏蔽词'),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: FormTextField(
-                    controller: _controller,
-                    maxLength: danmakuWordLength,
-                    decoration: const InputDecoration(
-                      hintText: '输入要屏蔽的词',
-                      counterText: '',
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    child: FormTextField(
+                      controller: _controller,
+                      maxLength: danmakuWordLength,
+                      decoration: const InputDecoration(
+                        hintText: '输入要屏蔽的词',
+                        counterText: '',
+                      ),
+                      onSubmitted: (_) => _add(),
                     ),
-                    onSubmitted: (_) => _add(),
+                  ),
+                  FilledButton(onPressed: _add, child: const Text('添加')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_error case final error?)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    error,
+                    style: TextStyle(fontSize: 13, color: colors.error),
                   ),
                 ),
-                FilledButton(onPressed: _add, child: const Text('添加')),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_error case final error?)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  error,
-                  style: TextStyle(fontSize: 13, color: colors.error),
-                ),
-              ),
-            if (_words.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  '还没有屏蔽词',
-                  style: TextStyle(color: colors.onSurfaceVariant),
-                ),
-              )
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 260),
-                child: SingleChildScrollView(
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final word in _words)
-                        InputChip(
-                          label: Text(word),
-                          onDeleted: () => setState(
-                            () => _words = [
-                              for (final entry in _words)
-                                if (entry != word) entry,
-                            ],
+              if (_words.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    '还没有屏蔽词',
+                    style: TextStyle(color: colors.onSurfaceVariant),
+                  ),
+                )
+              else
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: SingleChildScrollView(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final word in _words)
+                          InputChip(
+                            label: Text(word),
+                            onDeleted: () => setState(
+                              () => _words = [
+                                for (final entry in _words)
+                                  if (entry != word) entry,
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [

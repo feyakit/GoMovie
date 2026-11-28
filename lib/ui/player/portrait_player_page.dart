@@ -1433,9 +1433,13 @@ class _SeasonSheet extends StatelessWidget {
               shrinkWrap: true,
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
               itemCount: seasons.length,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 120,
-                mainAxisExtent: 48,
+                mainAxisExtent:
+                    (MediaQuery.textScalerOf(context).scale(14) + 28).clamp(
+                      48.0,
+                      68.0,
+                    ),
                 mainAxisSpacing: 8,
                 crossAxisSpacing: 8,
               ),

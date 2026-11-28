@@ -13,7 +13,15 @@ import 'motion/motion_widgets.dart';
 
 (int, double, double) _gridLayout(BuildContext context, double width) =>
     switch (AppScope.formFactorOf(context)) {
-      FormFactor.phone => (3, 10.0, 22.0),
+      FormFactor.phone => (
+        width < 330
+            ? 2
+            : width >= 480
+            ? 4
+            : 3,
+        10.0,
+        22.0,
+      ),
       FormFactor.television => (
         ((width + 20) / 120).floor().clamp(3, 8),
         20.0,

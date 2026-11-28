@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app_scope.dart';
+import 'drama_grid.dart';
 
 class ShimmerBox extends StatefulWidget {
   const ShimmerBox({super.key, this.width, this.height, this.radius = 12});
@@ -62,44 +63,51 @@ class ExploreSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final factor = AppScope.formFactorOf(context);
-    final columns = switch (factor) {
-      FormFactor.phone => 3,
-      FormFactor.pad => 4,
-      FormFactor.window => 5,
-      FormFactor.television => 5,
-    };
     final inset = factor == FormFactor.phone ? 16.0 : 24.0;
-    return ListView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(inset, 8, inset, 24),
-      children: [
-        ShimmerBox(
-          height: factor == FormFactor.phone ? 186 : 220,
-          radius: factor == FormFactor.phone ? 20 : 24,
-        ),
-        const SizedBox(height: 18),
-        GridView.builder(
-          shrinkWrap: true,
+    final heroHeight = factor == FormFactor.phone
+        ? (MediaQuery.sizeOf(context).height * 0.34).clamp(248.0, 320.0)
+        : 220.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = (constraints.maxWidth - inset * 2).clamp(
+          120.0,
+          double.infinity,
+        );
+        final delegate = dramaGridDelegate(context, contentWidth);
+        final columns = delegate is SliverGridDelegateWithFixedCrossAxisCount
+            ? delegate.crossAxisCount
+            : 3;
+        return ListView(
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: columns * 2,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.56,
-          ),
-          itemBuilder: (context, _) => const Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: ShimmerBox(radius: 12)),
-              SizedBox(height: 8),
-              ShimmerBox(height: 14, radius: 6),
-              SizedBox(height: 6),
-              ShimmerBox(width: 72, height: 11, radius: 5),
-            ],
-          ),
-        ),
-      ],
+          padding: EdgeInsets.fromLTRB(inset, 8, inset, 24),
+          children: [
+            ShimmerBox(
+              height: heroHeight,
+              radius: factor == FormFactor.phone ? 24 : 24,
+            ),
+            const SizedBox(height: 18),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: columns * 2,
+              gridDelegate: delegate,
+              itemBuilder: (context, _) => const Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AspectRatio(
+                    aspectRatio: 2 / 3,
+                    child: ShimmerBox(radius: 12),
+                  ),
+                  SizedBox(height: 8),
+                  ShimmerBox(height: 14, radius: 6),
+                  SizedBox(height: 6),
+                  ShimmerBox(width: 72, height: 11, radius: 5),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

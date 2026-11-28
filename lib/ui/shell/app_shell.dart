@@ -874,7 +874,9 @@ class _FloatingGlassDock extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
               child: Container(
-                height: 62,
+                height:
+                    (42 + MediaQuery.textScalerOf(context).scale(10.5) * 1.6)
+                        .clamp(62.0, 84.0),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 decoration: BoxDecoration(
                   color: dark
